@@ -6,12 +6,8 @@ from sqlalchemy.orm import validates
 
 class User(BaseModel):
     __tablename__ = 'users'
-    # ... existing columns ...
-
-    # One-to-Many: A user can own many places
-    places = db.relationship('Place', backref='owner', lazy=True)
-    # One-to-Many: A user can write many reviews
-    reviews = db.relationship('Review', backref='author', lazy=True)
+    # One-to-Many relationships
+    places = db.relationship('Place', back_populates='owner', cascade='all, delete-orphan')
 
     first_name = db.Column(db.String(50), nullable=False)
     last_name = db.Column(db.String(50), nullable=False)
@@ -23,7 +19,7 @@ class User(BaseModel):
         # Hash password if it's provided as a plain string in the constructor
         if 'password' in kwargs:
             password = kwargs.pop('password')
-            self.hash_password(password)
+            kwargs['password'] = bcrypt.generate_password_hash(password).decode('utf-8')
         super().__init__(**kwargs)
 
     # --- Validations ---

@@ -2,72 +2,41 @@
 """Review entity implementation."""
 
 from app.models.base_model import BaseModel
-from app.models.place import Place
-from app.models.user import User
 from app.extensions import db
-from app.models.base_model import BaseModel
+from sqlalchemy import CheckConstraint
+from sqlalchemy.orm import validates
 
 class Review(BaseModel):
     __tablename__ = 'reviews'
-    # ... existing columns ...
 
-    # Foreign Keys
-    user_id = db.Column(db.Integer, db.ForeignKey('users.id'), nullable=False)
-    place_id = db.Column(db.Integer, db.ForeignKey('places.id'), nullable=False)
-
-    id = db.Column(db.Integer, primary_key=True, autoincrement=True)
     text = db.Column(db.String(1000), nullable=False)
-    rating = db.Column(db.Integer, nullable=False) # Should be 1-5
-    """Represents a review written by a user for a place."""
+    rating = db.Column(db.Integer, nullable=False)
+    user_id = db.Column(db.String(36), db.ForeignKey('users.id'), nullable=False)
+    place_id = db.Column(db.String(36), db.ForeignKey('places.id'), nullable=False)
 
-    def __init__(self, text, rating, place, user, **kwargs):
-        super().__init__(**kwargs)
-        self._text = ""
-        self._rating = 0
+    user = db.relationship(
+        'User',
+        foreign_keys=[user_id],
+        backref=db.backref('reviews', cascade='all, delete-orphan', lazy=True),
+    )
+    place = db.relationship(
+        'Place',
+        foreign_keys=[place_id],
+        backref=db.backref('reviews', cascade='all, delete-orphan', lazy=True),
+    )
 
-        if not isinstance(place, Place):
-            raise ValueError("place must be a Place instance")
-        if not isinstance(user, User):
-            raise ValueError("user must be a User instance")
+    __table_args__ = (CheckConstraint('rating >= 1 AND rating <= 5', name='ck_review_rating_range'),)
 
-        self.place = place
-        self.user = user
-        self.text = text
-        self.rating = rating
-
-    @property
-    def text(self):
-        return self._text
-
-    @text.setter
-    def text(self, value):
+    @validates('text')
+    def validate_text(self, key, value):
         if not isinstance(value, str) or not value.strip():
             raise ValueError("text must be a non-empty string")
-        self._text = value.strip()
-        self.save()
+        return value.strip()
 
-    @property
-    def rating(self):
-        return self._rating
-
-    @rating.setter
-    def rating(self, value):
+    @validates('rating')
+    def validate_rating(self, key, value):
         if not isinstance(value, int):
             raise ValueError("rating must be an integer")
         if value < 1 or value > 5:
             raise ValueError("rating must be between 1 and 5")
-        self._rating = value
-        self.save()
-
-    @property
-    def user_id(self):
-        return self.user.id
-
-    @property
-    def place_id(self):
-        return self.place.id
-
-    def update(self, data):
-        """Restrict updates to editable review fields only."""
-        mutable_fields = {"text", "rating"}
-        super().update({key: value for key, value in data.items() if key in mutable_fields})
+        return value

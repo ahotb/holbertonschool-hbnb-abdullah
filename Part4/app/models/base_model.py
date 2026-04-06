@@ -16,3 +16,10 @@ class BaseModel(db.Model):
     def delete(self):
         db.session.delete(self)
         db.session.commit()
+
+    def update(self, data):
+        """Apply a partial update and persist it."""
+        for key, value in data.items():
+            if hasattr(self, key):
+                setattr(self, key, value)
+        db.session.commit()

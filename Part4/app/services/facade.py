@@ -4,7 +4,6 @@ from app.models.user import User
 from app.models.amenity import Amenity
 from app.models.place import Place
 from app.models.review import Review
-from app.persistence.repository import InMemoryRepository
 from app.services.repositories.user_repository import UserRepository
 from app.services.repositories.place_repository import PlaceRepository
 from app.services.repositories.review_repository import ReviewRepository
@@ -13,16 +12,9 @@ from app.services.repositories.amenity_repository import AmenityRepository
 class HBnBFacade:
     def __init__(self):
         self.user_repo = UserRepository()
-        self.place_repo = PlaceRepository()    # Changed from InMemory
-        self.review_repo = ReviewRepository()  # Changed from InMemory
-        self.amenity_repo = AmenityRepository() # Changed from InMemory
-        # Database Repository (Persistent for Users)
-        self.user_repo = UserRepository()
-
-        # In-Memory Repositories (Remaining entities)
-        #self.amenity_repo = InMemoryRepository()
-        #self.place_repo = InMemoryRepository()
-        #self.review_repo = InMemoryRepository()
+        self.place_repo = PlaceRepository()
+        self.review_repo = ReviewRepository()
+        self.amenity_repo = AmenityRepository()
 
     # --- User Methods ---
 
@@ -114,7 +106,7 @@ class HBnBFacade:
             price=place_data.get('price'),
             latitude=place_data.get('latitude'),
             longitude=place_data.get('longitude'),
-            owner=owner,
+            owner_id=owner.id,
         )
         place.amenities = validated_amenities
 
@@ -154,15 +146,14 @@ class HBnBFacade:
         review = Review(
             text=review_data.get('text'),
             rating=review_data.get('rating'),
-            place=place,
-            user=user,
+            place_id=place.id,
+            user_id=user.id,
         )
-        place.add_review(review)
         self.review_repo.add(review)
         return review
 
     def get_review(self, review_id):
-        return self.review_repo.get_review(review_id)
+        return self.review_repo.get(review_id)
 
     def get_all_reviews(self):
         return self.review_repo.get_all()
@@ -183,6 +174,4 @@ class HBnBFacade:
         review = self.get_review(review_id)
         if not review:
             return False
-
-        review.place.reviews = [item for item in review.place.reviews if item.id != review_id]
         return self.review_repo.delete(review_id)
