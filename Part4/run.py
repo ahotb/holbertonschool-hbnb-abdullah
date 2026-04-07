@@ -5,4 +5,4 @@ app = create_app()
 
 if __name__ == '__main__':
     # Debug mode is already handled by the Config class
-    app.run()
+    app.run(host='0.0.0.0', port=5000)
