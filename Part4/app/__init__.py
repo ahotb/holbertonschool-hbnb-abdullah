@@ -1,15 +1,34 @@
 #!/usr/bin/python3
+"""
+Application factory module.
+Initializes Flask app, extensions, API routes, and handles compatibility patches.
+"""
+
+# Third-party imports
 from flask import Flask
+from flask_cors import CORS
 from flask_restx import Api
 from flask_restx.model import ModelBase
-# Import from our new neutral ground
+
+# Local imports
 from .extensions import db, bcrypt, jwt
 
+# API Configuration Constants (Centralized for easy updates)
+API_VERSION = '1.0'
+API_TITLE = 'HBnB API'
+API_DESCRIPTION = 'HBnB Application API'
+API_DOC_PATH = '/api/v1/'
+API_PREFIX = '/api/v1'
+
+# Store original validation method for compatibility patch
 _ORIGINAL_RESTX_MODEL_VALIDATE = ModelBase.validate
 
 
 def _patch_restx_registry_compat():
-    """Handle jsonschema/flask-restx registry argument mismatches safely."""
+    """
+    Compatibility patch for jsonschema/flask-restx registry argument mismatches.
+    Prevents TypeError in newer jsonschema versions while maintaining functionality.
+    """
     if getattr(ModelBase.validate, "_registry_compat_patched", False):
         return
 
@@ -31,34 +50,57 @@ def _patch_restx_registry_compat():
 
 def create_app(config_class="config.DevelopmentConfig"):
     """
-    Update the app factory to receive the settings object.
+    Application factory function.
+    Creates and configures the Flask application instance.
+
+    Args:
+        config_class (str): Dot-notation path to the configuration class.
+
+    Returns:
+        Flask: Configured Flask application instance.
     """
+    # 1. Initialize Flask App
     app = Flask(__name__)
     app.config.from_object(config_class)
 
-    # Initialize extensions
+    # 2. Initialize Extensions
     db.init_app(app)
     bcrypt.init_app(app)
     jwt.init_app(app)
 
+    # 3. Enable CORS for Frontend Integration (Reads from config.py)
+    cors_origins = app.config.get('CORS_ORIGINS', [])
+    CORS(app, resources={f"{API_PREFIX}/*": {"origins": cors_origins}})
+
+    # 4. Apply RestX Compatibility Patch
     _patch_restx_registry_compat()
 
-    # Setup API
-    api = Api(app, version='1.0', title='HBnB API',
-              description='HBnB Application API', doc='/api/v1/')
+    # 5. Setup Flask-RestX API
+    api = Api(
+        app,
+        version=API_VERSION,
+        title=API_TITLE,
+        description=API_DESCRIPTION,
+        doc=API_DOC_PATH
+    )
 
-    # Import Namespaces INSIDE the factory to prevent circularity
+    # 6. Import Namespaces (Lazy import to prevent circular dependencies)
     from app.api.v1.users import api as users_ns
     from app.api.v1.amenities import api as amenities_ns
     from app.api.v1.places import api as places_ns
     from app.api.v1.reviews import api as reviews_ns
     from app.api.v1.auth import api as auth_ns
 
-    # Register Namespaces
-    api.add_namespace(users_ns, path='/api/v1/users')
-    api.add_namespace(amenities_ns, path='/api/v1/amenities')
-    api.add_namespace(places_ns, path='/api/v1/places')
-    api.add_namespace(reviews_ns, path='/api/v1/reviews')
-    api.add_namespace(auth_ns, path='/api/v1/auth')
+    # 7. Register Namespaces (Clean & DRY)
+    namespaces = [
+        (users_ns, '/users'),
+        (amenities_ns, '/amenities'),
+        (places_ns, '/places'),
+        (reviews_ns, '/reviews'),
+        (auth_ns, '/auth'),
+    ]
+
+    for ns, path in namespaces:
+        api.add_namespace(ns, path=f"{API_PREFIX}{path}")
 
     return app
