@@ -1,8 +1,0 @@
-flask
-flask-restx
-jsonschema>=4.18.0
-flask-bcrypt
-flask-jwt-extended
-sqlalchemy
-flask-sqlalchemy
-flask_cors
