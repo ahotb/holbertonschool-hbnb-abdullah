@@ -1,4 +1,4 @@
-#part2/app/api/__init__.py
+# Registers Flask-RESTX Api and route namespaces .
 from flask_restx import Api
 from app.api.v1.users import api as users_ns
 from app.api.v1.amenities import amenity_bp

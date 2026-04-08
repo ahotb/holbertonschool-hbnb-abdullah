@@ -1,4 +1,4 @@
-#part2/app/persistence/__init__.py
+# Persistence package.
 from app.persistence.user_repository import UserRepository
 
 user_repository = UserRepository()

@@ -1,4 +1,4 @@
-#part3/app/services/repositories/amenity_repository.py
+# AmenityRepository: persistence operations for Amenity.
 from app.models.amenity import Amenity
 from app.persistence.repository import SQLAlchemyRepository
 

@@ -1,4 +1,4 @@
-#part3/run.py
+# Flask application entry: HTML routes and REST API.
 from app import create_app
 from app.api import create_api
 from config import DevelopmentConfig

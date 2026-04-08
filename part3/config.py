@@ -1,4 +1,4 @@
-#part3/config.py
+# Application configuration .
 import os
 
 class Config:

@@ -1,4 +1,4 @@
-#part3/tests/test_api.py
+# HTTP API smoke tests (Part 3).
 import pytest
 from run import app
 

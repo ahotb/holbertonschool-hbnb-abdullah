@@ -1,4 +1,4 @@
-#part3/app/models/BaseModel.py
+# Base SQLAlchemy model: id and timestamps shared by entities.
 from app import db
 import uuid
 from datetime import datetime

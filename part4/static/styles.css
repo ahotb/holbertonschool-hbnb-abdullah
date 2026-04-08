@@ -74,8 +74,8 @@ main {
 
 .places-grid {
   display: grid;
-  grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
-  gap: 10px;
+  grid-template-columns: repeat(auto-fit, minmax(260px, 1fr));
+  gap: 16px;
 }
 
 .filters {
@@ -94,6 +94,147 @@ main {
   background-color: #ffffff;
 }
 
+.place-card--summary {
+  margin: 0;
+  padding: 0;
+  overflow: hidden;
+  display: flex;
+  flex-direction: column;
+  border: 1px solid #e2e8f0;
+  border-radius: 12px;
+  box-shadow: 0 1px 3px rgba(15, 23, 42, 0.08);
+}
+
+.place-card--summary .place-photo,
+.place-card--summary .place-photo-placeholder {
+  width: 100%;
+  height: 160px;
+  object-fit: cover;
+  margin: 0;
+  border-radius: 0;
+  flex-shrink: 0;
+}
+
+.place-photo-placeholder {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background: linear-gradient(145deg, #e2e8f0 0%, #f1f5f9 100%);
+  color: #64748b;
+  font-size: 14px;
+  font-weight: 600;
+}
+
+.place-card-body {
+  padding: 14px 14px 16px;
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  flex: 1;
+}
+
+.place-card-title {
+  margin: 0;
+  font-size: 1.15rem;
+  line-height: 1.3;
+  color: #0f172a;
+}
+
+.place-card-rating {
+  margin: 0;
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 6px 10px;
+  font-size: 14px;
+}
+
+.place-card-rating-empty {
+  color: #64748b;
+  font-size: 14px;
+}
+
+.place-card-rating .stars {
+  font-size: 15px;
+}
+
+.rating-average {
+  font-weight: 700;
+  color: #b45309;
+}
+
+.rating-count {
+  color: #64748b;
+  font-size: 13px;
+}
+
+.place-card-line {
+  margin: 0;
+  font-size: 14px;
+  color: #334155;
+}
+
+.place-card-price {
+  font-size: 15px;
+}
+
+.amenities-preview {
+  margin: 4px 0 0;
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 6px 8px;
+  font-size: 13px;
+  color: #475569;
+}
+
+.amenities-preview-label {
+  font-weight: 700;
+  color: #334155;
+  margin-right: 4px;
+}
+
+.amenities-preview-empty {
+  margin: 0;
+  font-size: 13px;
+}
+
+.amenity-pill {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  background: #f1f5f9;
+  border-radius: 999px;
+  padding: 2px 8px 2px 4px;
+  max-width: 140px;
+}
+
+.amenity-pill-name {
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  font-size: 12px;
+}
+
+.amenity-icon-sm {
+  width: 20px;
+  height: 20px;
+  object-fit: contain;
+  flex-shrink: 0;
+}
+
+.amenities-more {
+  font-size: 12px;
+  font-weight: 600;
+  color: #2563eb;
+}
+
+.place-card-cta {
+  margin-top: auto;
+  align-self: flex-start;
+  text-align: center;
+}
+
 .place-photo {
   width: 100%;
   max-height: 220px;
@@ -108,6 +249,28 @@ main {
   border: 1px solid #ddd;
   border-radius: 10px;
   background-color: #ffffff;
+}
+
+.place-overall-rating {
+  margin: 0 0 12px;
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 8px 12px;
+  font-size: 15px;
+}
+
+.place-overall-rating-empty {
+  color: #64748b;
+  font-size: 14px;
+}
+
+.place-photo-placeholder--detail {
+  width: 100%;
+  min-height: 200px;
+  max-height: 320px;
+  border-radius: 8px;
+  margin: 6px 0 10px;
 }
 
 .place-info p {
@@ -129,9 +292,10 @@ main {
 }
 
 .amenity-icon {
-  width: 18px;
-  height: 18px;
+  width: 28px;
+  height: 28px;
   object-fit: contain;
+  flex-shrink: 0;
 }
 
 .amenity-label {
@@ -142,6 +306,74 @@ main {
   letter-spacing: 1px;
   color: #f59e0b;
   font-size: 16px;
+}
+
+.star-rating-input {
+  display: flex;
+  gap: 4px;
+  margin: 4px 0 12px;
+}
+
+.star-rating-input .star-btn {
+  width: auto;
+  padding: 4px 6px;
+  border: none;
+  background: transparent;
+  cursor: pointer;
+  font-size: 28px;
+  line-height: 1;
+  color: #cbd5e1;
+  transition: color 0.15s ease, transform 0.1s ease;
+}
+
+.star-rating-input .star-btn:hover,
+.star-rating-input .star-btn.active {
+  color: #f59e0b;
+}
+
+.star-rating-input .star-btn:focus-visible {
+  outline: 2px solid #2563eb;
+  outline-offset: 2px;
+  border-radius: 4px;
+}
+
+.sr-only {
+  position: absolute;
+  width: 1px;
+  height: 1px;
+  padding: 0;
+  margin: -1px;
+  overflow: hidden;
+  clip: rect(0, 0, 0, 0);
+  white-space: nowrap;
+  border: 0;
+}
+
+.login-hint {
+  margin: 8px 0 0;
+  font-size: 15px;
+  color: #475569;
+}
+
+.login-hint a {
+  color: #2563eb;
+  font-weight: 600;
+}
+
+.owner-hint {
+  color: #92400e;
+  background: #fffbeb;
+  border: 1px solid #fcd34d;
+  border-radius: 8px;
+  padding: 10px 12px;
+}
+
+.review-rating {
+  margin-bottom: 6px;
+}
+
+.review-text {
+  margin: 0 0 8px;
 }
 
 .form {

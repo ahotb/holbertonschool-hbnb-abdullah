@@ -1,4 +1,4 @@
-#part3/run.py
+# Flask application entry (Part 3).
 from app import create_app
 from app.api import create_api
 from config import DevelopmentConfig

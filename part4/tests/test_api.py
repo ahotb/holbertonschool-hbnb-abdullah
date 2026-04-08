@@ -6,7 +6,7 @@ def client():
     app.testing = True
     return app.test_client()
 
-# ----- API Tests -----
+# HTTP API smoke tests.
 def test_login_with_invalid_credentials(client):
     response = client.post(
         "/api/v1/users/login",

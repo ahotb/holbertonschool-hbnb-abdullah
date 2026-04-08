@@ -21,11 +21,7 @@ class ReviewList(Resource):
     @jwt_required()
     @api.expect(review_model)
     def post(self):
-        """Create a new review (admin only)"""
-        claims = get_jwt()
-        if not claims.get('is_admin'):
-            return {"error": "Admin privileges required"}, 403
-
+        """Create a new review (authenticated users; not admin-only)"""
         current_user_id = get_jwt_identity()
         data = api.payload.copy()
 

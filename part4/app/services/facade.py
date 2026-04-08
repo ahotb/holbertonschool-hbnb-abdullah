@@ -1,4 +1,4 @@
-#part3/app/services/facade.py
+# Service facade: coordinates repositories and business rules.
 from app.services.repositories.user_repository import UserRepository
 from app.services.repositories.place_repository import PlaceRepository
 from app.services.repositories.review_repository import ReviewRepository
@@ -210,7 +210,11 @@ class HBnBFacade:
         if not place:
             raise ValueError("Place not found")
         rating = review_data.get("rating")
-        if not isinstance(rating, int) or not (1 <= rating <= 5):
+        try:
+            rating = int(rating)
+        except (TypeError, ValueError):
+            raise ValueError("Rating must be integer 1-5")
+        if not (1 <= rating <= 5):
             raise ValueError("Rating must be integer 1-5")
         text = review_data.get("text") or review_data.get("comment") or ""
         from app.models.review import Review

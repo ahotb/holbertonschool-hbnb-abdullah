@@ -17,8 +17,9 @@
           <label for="comment">Comment</label>
           <textarea id="comment" name="comment" rows="5" required></textarea>
 
-          <label for="rating">Rating</label>
-          <select id="rating" name="rating" required>
+          <label>Rating (tap the stars)</label>
+          <div id="star-rating" class="star-rating-input" role="group" aria-label="Choose rating from 1 to 5"></div>
+          <select id="rating" name="rating" class="sr-only" required aria-label="Rating 1 to 5">
             <option value="">Select rating</option>
             <option value="1">1 - Poor</option>
             <option value="2">2 - Fair</option>

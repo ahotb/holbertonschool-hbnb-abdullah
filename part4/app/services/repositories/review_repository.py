@@ -1,4 +1,4 @@
-#part3/app/services/repositories/review_repository.py
+# ReviewRepository: persistence and queries for Review.
 from app.models.review import Review
 from app.persistence.repository import SQLAlchemyRepository
 

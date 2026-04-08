@@ -1,4 +1,4 @@
-#part3/app/models/amenity.py
+# Amenity model: name and description.
 from app import db
 from app.models.BaseModel import BaseModel
 

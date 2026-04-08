@@ -1,4 +1,4 @@
-#part3/app/persistence/user_repository.py
+# Legacy user repository stub; prefer services/repositories.
 class UserRepository:
     def __init__(self):
         self.users = []

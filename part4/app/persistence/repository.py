@@ -1,4 +1,4 @@
-#part2/app/persistence/repository.py
+# Abstract and concrete repository base classes.
 from abc import ABC, abstractmethod
 
 class Repository(ABC):

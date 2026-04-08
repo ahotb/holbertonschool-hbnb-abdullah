@@ -1,4 +1,4 @@
-#part3/app/services/repositories/user_repository.py
+# UserRepository: persistence for User.
 from app.models.user import User
 from app.persistence.repository import SQLAlchemyRepository
 

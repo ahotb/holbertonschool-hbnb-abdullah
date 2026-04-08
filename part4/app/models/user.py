@@ -1,4 +1,4 @@
-#part3/app/models/user.py
+# User model: profile, password hash, admin flag, relationships.
 from app import db, bcrypt
 from app.models.BaseModel import BaseModel
 

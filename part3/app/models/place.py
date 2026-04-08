@@ -1,8 +1,8 @@
-#part3/app/models/place.py
+# Place model and many-to-many link to amenities .
 from app import db
 from app.models.BaseModel import BaseModel
 
-# Many-to-many association table: Place ↔ Amenity
+# Many-to-many association table between Place and Amenity.
 place_amenity = db.Table(
     'place_amenity',
     db.Column('place_id', db.String(36), db.ForeignKey('places.id'), primary_key=True),
@@ -20,7 +20,7 @@ class Place(BaseModel):
     latitude = db.Column(db.Float, nullable=False)
     longitude = db.Column(db.Float, nullable=False)
 
-    # FK → users.id  (proper foreign key, replaces the plain String column)
+    # Foreign key to users.id (owner of the place).
     owner_id = db.Column(db.String(36), db.ForeignKey('users.id'), nullable=False)
 
     # One-to-many: a Place has many Reviews

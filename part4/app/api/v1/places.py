@@ -4,7 +4,7 @@ from app.services import facade
 
 api = Namespace('places', description='Place operations')
 
-# Models
+# Request/response models for Swagger (place payloads).
 amenity_model = api.model('PlaceAmenity', {
     'id': fields.String,
     'name': fields.String

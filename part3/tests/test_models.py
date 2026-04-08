@@ -1,4 +1,4 @@
-# part3/tests/test_models_full.py
+# Unit tests for Part 3 domain models (User, Place, Review, Amenity).
 import pytest
 from app.models.user import User
 from app.models.place import Place
@@ -16,7 +16,7 @@ def test_create_user():
     assert user.first_name == "John"
     assert user.last_name == "Doe"
     assert user.email == "john@example.com"
-    assert hasattr(user, "id")  # كل User عنده id
+    assert hasattr(user, "id")
 
 def test_invalid_user_email():
     with pytest.raises(ValueError):

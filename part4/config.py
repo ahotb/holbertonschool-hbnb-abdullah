@@ -1,4 +1,4 @@
-#part3/config.py
+# Application configuration: secrets, DB URI, debug flags.
 import os
 
 class Config:

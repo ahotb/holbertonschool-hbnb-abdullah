@@ -1,4 +1,4 @@
-# part2/app/models/__init__.py
+# Models package exports.
 
 from .BaseModel import BaseModel
 from .user import User

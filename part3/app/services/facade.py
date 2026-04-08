@@ -1,4 +1,4 @@
-#part3/app/services/facade.py
+# Service facade: coordinates repositories and business rules .
 from app.services.repositories.user_repository import UserRepository
 from app.services.repositories.place_repository import PlaceRepository
 from app.services.repositories.review_repository import ReviewRepository

@@ -1,4 +1,4 @@
-#part2/app/services/__init__.py
+# Services layer: exposes the shared HBnBFacade instance.
 from app.services.facade import HBnBFacade
 
 facade = HBnBFacade()

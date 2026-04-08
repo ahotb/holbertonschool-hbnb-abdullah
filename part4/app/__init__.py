@@ -1,3 +1,4 @@
+# Flask app factory: extensions (db, JWT, bcrypt, CORS).
 from flask import Flask
 from flask_sqlalchemy import SQLAlchemy
 from flask_jwt_extended import JWTManager

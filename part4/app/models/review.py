@@ -1,4 +1,4 @@
-#part3/app/models/review.py
+# Review model: rating and text linked to user and place.
 from app import db
 from app.models.BaseModel import BaseModel
 
@@ -10,9 +10,9 @@ class Review(BaseModel):
     text = db.Column(db.String(1024), nullable=False)
     rating = db.Column(db.Integer, nullable=False)
 
-    # FK → users.id
+    # Foreign key to users.id (author of the review).
     user_id = db.Column(db.String(36), db.ForeignKey('users.id'), nullable=False)
-    # FK → places.id
+    # Foreign key to places.id.
     place_id = db.Column(db.String(36), db.ForeignKey('places.id'), nullable=False)
 
     def __init__(self, rating=0, text="", comment=None,

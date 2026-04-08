@@ -1,4 +1,4 @@
-#part3/app/services/repositories/place_repository.py
+# PlaceRepository: persistence operations for Place.
 from app.models.place import Place
 from app.persistence.repository import SQLAlchemyRepository
 

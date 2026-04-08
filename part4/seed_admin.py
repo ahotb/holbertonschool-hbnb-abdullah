@@ -11,7 +11,8 @@ from app.models.user import User
 app = create_app(DevelopmentConfig)
 
 with app.app_context():
-    db.drop_all()   # reset schema (dev only — new FKs / relationships added)
+    # Dev-only: wipe tables so schema matches current models.
+    db.drop_all()
     db.create_all()
 
     admin_email = "admin@hbnb.io"
