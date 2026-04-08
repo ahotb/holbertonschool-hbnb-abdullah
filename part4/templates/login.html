@@ -13,7 +13,7 @@
     <main>
       <section class="auth-section">
         <h1>Login</h1>
-        <form class="form" method="post" action="#">
+        <form id="login-form" class="form" method="post" action="#">
           <label for="email">Email</label>
           <input id="email" name="email" type="email" required />
 
@@ -21,10 +21,12 @@
           <input id="password" name="password" type="password" required />
 
           <button type="submit" class="details-button">Sign in</button>
+          <p id="login-error" class="error-message" aria-live="polite"></p>
         </form>
       </section>
     </main>
 
     {% include 'footer.html' %}
+    <script src="{{ url_for('static', filename='scripts.js') }}"></script>
   </body>
 </html>
