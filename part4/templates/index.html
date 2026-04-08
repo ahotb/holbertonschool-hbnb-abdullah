@@ -16,27 +16,22 @@
         <p>Find your next stay from our featured places.</p>
       </section>
 
-      <section id="places" class="places-grid">
-        <article class="place-card">
-          <h2>Sea View Apartment</h2>
-          <p>Price per night: $120</p>
-          <a class="details-button" href="place.html">View Details</a>
-        </article>
+      <section class="filters">
+        <label for="price-filter">Max price</label>
+        <select id="price-filter" name="price-filter">
+          <option value="10">10</option>
+          <option value="50">50</option>
+          <option value="100">100</option>
+          <option value="all" selected>All</option>
+        </select>
+      </section>
 
-        <article class="place-card">
-          <h2>Mountain Cabin</h2>
-          <p>Price per night: $90</p>
-          <a class="details-button" href="place.html">View Details</a>
-        </article>
-
-        <article class="place-card">
-          <h2>City Studio</h2>
-          <p>Price per night: $75</p>
-          <a class="details-button" href="place.html">View Details</a>
-        </article>
+      <section id="places-list" class="places-grid">
+        <!-- Places are injected by scripts.js -->
       </section>
     </main>
 
     {% include 'footer.html' %}
+    <script src="{{ url_for('static', filename='scripts.js') }}"></script>
   </body>
 </html>

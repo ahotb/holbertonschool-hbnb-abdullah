@@ -64,6 +64,13 @@ main {
   gap: 10px;
 }
 
+.filters {
+  margin: 20px;
+  display: flex;
+  align-items: center;
+  gap: 10px;
+}
+
 .place-card,
 .review-card {
   margin: 20px;
