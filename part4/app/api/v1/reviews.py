@@ -21,7 +21,11 @@ class ReviewList(Resource):
     @jwt_required()
     @api.expect(review_model)
     def post(self):
-        """Create a new review (authenticated users only)"""
+        """Create a new review (admin only)"""
+        claims = get_jwt()
+        if not claims.get('is_admin'):
+            return {"error": "Admin privileges required"}, 403
+
         current_user_id = get_jwt_identity()
         data = api.payload.copy()
 
@@ -82,17 +86,14 @@ class ReviewResource(Resource):
     @jwt_required()
     @api.expect(review_update_model)
     def put(self, review_id):
-        """Update a review (author or admin)"""
+        """Update a review (admin only)"""
         claims = get_jwt()
-        current_user_id = get_jwt_identity()
-        is_admin = claims.get('is_admin', False)
+        if not claims.get('is_admin'):
+            return {"error": "Admin privileges required"}, 403
 
         review = facade.get_review(review_id)
         if not review:
             return {"error": "Review not found"}, 404
-
-        if not is_admin and str(review.user_id) != str(current_user_id):
-            return {"error": "Unauthorized action"}, 403
 
         updated = facade.update_review(review_id, api.payload)
         if not updated:
@@ -101,17 +102,14 @@ class ReviewResource(Resource):
 
     @jwt_required()
     def delete(self, review_id):
-        """Delete a review (author or admin)"""
+        """Delete a review (admin only)"""
         claims = get_jwt()
-        current_user_id = get_jwt_identity()
-        is_admin = claims.get('is_admin', False)
+        if not claims.get('is_admin'):
+            return {"error": "Admin privileges required"}, 403
 
         review = facade.get_review(review_id)
         if not review:
             return {"error": "Review not found"}, 404
-
-        if not is_admin and str(review.user_id) != str(current_user_id):
-            return {"error": "Unauthorized action"}, 403
 
         facade.delete_review(review_id)
         return {"message": "Review deleted successfully"}, 200

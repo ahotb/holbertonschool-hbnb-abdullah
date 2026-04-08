@@ -155,7 +155,14 @@ class HBnBFacade:
                 {"id": a.id, "name": a.name} for a in place.amenities
             ],
             "reviews": [
-                {"id": r.id, "text": r.text, "rating": r.rating, "user_id": r.user_id}
+                {
+                    "id": r.id,
+                    "text": r.text,
+                    "rating": r.rating,
+                    "user_id": r.user_id,
+                    "user_first_name": r.author.first_name if r.author else None,
+                    "user_last_name": r.author.last_name if r.author else None,
+                }
                 for r in place.reviews
             ]
         }
@@ -180,6 +187,13 @@ class HBnBFacade:
                 place.amenities.append(amenity)
         db.session.commit()
         return self.get_place(place_id)
+
+    def delete_place(self, place_id):
+        place = self.place_repo.get(place_id)
+        if not place:
+            return False
+        self.place_repo.delete(place_id)
+        return True
 
     # ------------------------------------------------------------------ #
     #  Review

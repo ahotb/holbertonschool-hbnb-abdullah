@@ -18,6 +18,11 @@ def login_page():
     return render_template("login.html")
 
 
+@app.route("/register.html")
+def register_page():
+    return render_template("register.html")
+
+
 @app.route("/place.html")
 def place_page():
     return render_template("place.html")
@@ -26,6 +31,11 @@ def place_page():
 @app.route("/add_review.html")
 def add_review_page():
     return render_template("add_review.html")
+
+
+@app.route("/add_place.html")
+def add_place_page():
+    return render_template("add_place.html")
 
 
 # Flask-RESTX registers endpoint "root" on "/".

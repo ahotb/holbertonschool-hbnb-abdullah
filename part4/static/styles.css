@@ -18,6 +18,12 @@ body {
   border-bottom: 1px solid #e5e7eb;
 }
 
+.header-actions {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
 .logo {
   width: 56px;
   height: 56px;
@@ -58,6 +64,14 @@ main {
   margin-bottom: 8px;
 }
 
+.auth-section {
+  margin: 24px auto;
+  max-width: 520px;
+  display: grid;
+  gap: 12px;
+  justify-items: center;
+}
+
 .places-grid {
   display: grid;
   grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
@@ -78,6 +92,14 @@ main {
   border: 1px solid #ddd;
   border-radius: 10px;
   background-color: #ffffff;
+}
+
+.place-photo {
+  width: 100%;
+  max-height: 220px;
+  object-fit: cover;
+  border-radius: 8px;
+  margin: 6px 0 10px;
 }
 
 .place-details {
@@ -116,6 +138,12 @@ main {
   font-size: 14px;
 }
 
+.stars {
+  letter-spacing: 1px;
+  color: #f59e0b;
+  font-size: 16px;
+}
+
 .form {
   display: grid;
   gap: 10px;
@@ -124,6 +152,12 @@ main {
   padding: 16px;
   border: 1px solid #ddd;
   border-radius: 10px;
+}
+
+.helper-text {
+  margin: 0;
+  font-size: 14px;
+  color: #475569;
 }
 
 .error-message {

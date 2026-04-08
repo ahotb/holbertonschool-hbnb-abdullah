@@ -69,7 +69,7 @@ class Register(Resource):
             last_name=data.get('last_name'),
             email=email,
             password=data.get('password'),
-            is_admin=data.get('is_admin', False)
+            is_admin=False
         )
         db.session.add(user)
         db.session.commit()

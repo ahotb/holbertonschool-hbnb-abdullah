@@ -44,7 +44,11 @@ class PlaceList(Resource):
     @jwt_required()
     @api.expect(place_model)
     def post(self):
-        """Create a new place (authenticated users only)"""
+        """Create a new place (admin only)"""
+        claims = get_jwt()
+        if not claims.get('is_admin'):
+            return {"error": "Admin privileges required"}, 403
+
         current_user_id = get_jwt_identity()
         data = api.payload.copy()
         data['owner_id'] = current_user_id
@@ -79,17 +83,15 @@ class PlaceResource(Resource):
     @jwt_required()
     @api.expect(place_update_model)
     def put(self, place_id):
-        """Update a place (owner or admin)"""
+        """Update a place (admin only)"""
         claims = get_jwt()
-        current_user_id = get_jwt_identity()
         is_admin = claims.get('is_admin', False)
+        if not is_admin:
+            return {"error": "Admin privileges required"}, 403
 
         place = facade.get_place_obj(place_id)
         if not place:
             return {"error": "Place not found"}, 404
-
-        if not is_admin and str(place.owner_id) != str(current_user_id):
-            return {"error": "Unauthorized action"}, 403
 
         data = api.payload
         try:
@@ -99,6 +101,18 @@ class PlaceResource(Resource):
         if not updated:
             return {"error": "Place not found"}, 404
         return {"message": "Place updated successfully"}, 200
+
+    @jwt_required()
+    def delete(self, place_id):
+        """Delete a place (admin only)"""
+        claims = get_jwt()
+        if not claims.get('is_admin'):
+            return {"error": "Admin privileges required"}, 403
+
+        deleted = facade.delete_place(place_id)
+        if not deleted:
+            return {"error": "Place not found"}, 404
+        return {"message": "Place deleted successfully"}, 200
 
 
 @api.route('/<place_id>/reviews')

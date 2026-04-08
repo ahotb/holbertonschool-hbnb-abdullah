@@ -1,0 +1,65 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>HBnB - Add Place</title>
+    <link rel="icon" type="image/png" href="{{ url_for('static', filename='images/icon.png') }}" />
+    <link rel="stylesheet" href="{{ url_for('static', filename='styles.css') }}" />
+  </head>
+  <body>
+    {% include 'header.html' %}
+
+    <main>
+      <section class="add-review">
+        <h1>Add Place</h1>
+        <form id="add-place-form" class="form" method="post" action="#">
+          <label for="place_title">Title</label>
+          <input id="place_title" name="title" type="text" required />
+
+          <label for="place_country">Country</label>
+          <input id="place_country" name="country" type="text" required />
+
+          <label for="place_city">City</label>
+          <input id="place_city" name="city" type="text" required />
+
+          <label for="place_description">Description</label>
+          <textarea id="place_description" name="description" rows="4" required></textarea>
+
+          <label for="place_image_url">Image URL (one image)</label>
+          <input id="place_image_url" name="image_url" type="text" placeholder="https://example.com/place.jpg or logo.png" />
+
+          <label for="place_amenity_ids">Amenity IDs (comma separated, optional)</label>
+          <input id="place_amenity_ids" name="amenity_ids" type="text" placeholder="id1,id2,id3" />
+
+          <label for="place_price">Price per night</label>
+          <input id="place_price" name="price" type="number" min="1" step="1" required />
+
+          <label for="place_latitude">Latitude</label>
+          <input id="place_latitude" name="latitude" type="number" step="0.000001" required />
+
+          <label for="place_longitude">Longitude</label>
+          <input id="place_longitude" name="longitude" type="number" step="0.000001" required />
+
+          <button type="submit" class="details-button">Create place</button>
+          <p id="add-place-message" class="error-message" aria-live="polite"></p>
+        </form>
+
+        <h2>Create Amenity (Admin)</h2>
+        <form id="amenity-form" class="form" method="post" action="#">
+          <label for="amenity_name">Amenity name</label>
+          <input id="amenity_name" name="amenity_name" type="text" required />
+
+          <label for="amenity_description">Amenity description</label>
+          <input id="amenity_description" name="amenity_description" type="text" />
+
+          <button type="submit" class="details-button">Create amenity</button>
+          <p id="amenity-message" class="error-message" aria-live="polite"></p>
+        </form>
+      </section>
+    </main>
+
+    {% include 'footer.html' %}
+    <script src="{{ url_for('static', filename='scripts.js') }}"></script>
+  </body>
+</html>

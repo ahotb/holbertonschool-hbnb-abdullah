@@ -1,0 +1,39 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>HBnB - Register</title>
+    <link rel="icon" type="image/png" href="{{ url_for('static', filename='images/icon.png') }}" />
+    <link rel="stylesheet" href="{{ url_for('static', filename='styles.css') }}" />
+  </head>
+  <body>
+    {% include 'header.html' %}
+
+    <main>
+      <section class="auth-section">
+        <h1>Create Account</h1>
+        <form id="register-form" class="form" method="post" action="#">
+          <label for="first_name">First name</label>
+          <input id="first_name" name="first_name" type="text" required />
+
+          <label for="last_name">Last name</label>
+          <input id="last_name" name="last_name" type="text" required />
+
+          <label for="register_email">Email</label>
+          <input id="register_email" name="email" type="email" required />
+
+          <label for="register_password">Password</label>
+          <input id="register_password" name="password" type="password" required />
+
+          <button type="submit" class="details-button">Create account</button>
+          <p id="register-message" class="error-message" aria-live="polite"></p>
+          <p class="helper-text">Already have an account? <a href="login.html">Sign in</a></p>
+        </form>
+      </section>
+    </main>
+
+    {% include 'footer.html' %}
+    <script src="{{ url_for('static', filename='scripts.js') }}"></script>
+  </body>
+</html>
