@@ -1,0 +1,42 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>HBnB - Places</title>
+    <link rel="icon" type="image/png" href="{{ url_for('static', filename='images/icon.png') }}" />
+    <link rel="stylesheet" href="{{ url_for('static', filename='styles.css') }}" />
+  </head>
+  <body>
+    {% include 'header.html' %}
+
+    <main>
+      <section class="page-intro">
+        <h1>Available Places</h1>
+        <p>Find your next stay from our featured places.</p>
+      </section>
+
+      <section id="places" class="places-grid">
+        <article class="place-card">
+          <h2>Sea View Apartment</h2>
+          <p>Price per night: $120</p>
+          <a class="details-button" href="place.html">View Details</a>
+        </article>
+
+        <article class="place-card">
+          <h2>Mountain Cabin</h2>
+          <p>Price per night: $90</p>
+          <a class="details-button" href="place.html">View Details</a>
+        </article>
+
+        <article class="place-card">
+          <h2>City Studio</h2>
+          <p>Price per night: $75</p>
+          <a class="details-button" href="place.html">View Details</a>
+        </article>
+      </section>
+    </main>
+
+    {% include 'footer.html' %}
+  </body>
+</html>
