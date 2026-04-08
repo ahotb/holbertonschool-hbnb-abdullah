@@ -1,0 +1,120 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>HBnB - Manage users</title>
+    <link rel="icon" type="image/png" href="{{ url_for('static', filename='images/icon.png') }}" />
+    <link rel="stylesheet" href="{{ url_for('static', filename='styles.css') }}" />
+  </head>
+  <body>
+    {% include 'header.html' %}
+
+    <main class="admin-users-page">
+      <section class="admin-users-panel">
+        <header class="admin-users-header">
+          <h1>Manage users</h1>
+          <p class="admin-users-count-line">
+            <strong id="admin-users-count">0</strong> user(s) in this view
+          </p>
+        </header>
+
+        <div class="admin-users-filters">
+          <div class="admin-users-filter-field admin-users-filter-grow">
+            <label for="admin-users-search">Search</label>
+            <input
+              id="admin-users-search"
+              class="admin-users-search-input"
+              type="search"
+              placeholder="Name or email…"
+              autocomplete="off"
+              aria-label="Filter users by name or email"
+            />
+          </div>
+          <div class="admin-users-filter-field">
+            <label for="admin-users-role-filter">Role</label>
+            <select id="admin-users-role-filter" class="admin-users-select" aria-label="Filter by role">
+              <option value="all">All users</option>
+              <option value="user">Guests only</option>
+              <option value="admin">Admins only</option>
+            </select>
+          </div>
+          <button type="button" id="admin-users-apply-filters" class="details-button">Apply filters</button>
+        </div>
+
+        <p id="admin-users-message" class="error-message" aria-live="polite"></p>
+
+        <details class="admin-users-add-details" id="admin-users-add-block">
+          <summary>Add new user</summary>
+          <form id="admin-user-add-form" class="form admin-user-form">
+            <div class="form-row two-cols">
+              <div>
+                <label for="admin-add-first">First name</label>
+                <input id="admin-add-first" name="first_name" type="text" required autocomplete="given-name" />
+              </div>
+              <div>
+                <label for="admin-add-last">Last name</label>
+                <input id="admin-add-last" name="last_name" type="text" required autocomplete="family-name" />
+              </div>
+            </div>
+            <label for="admin-add-email">Email</label>
+            <input id="admin-add-email" name="email" type="email" required autocomplete="email" />
+            <label for="admin-add-password">Password</label>
+            <input id="admin-add-password" name="password" type="password" required autocomplete="new-password" />
+            <label class="admin-users-checkbox-label">
+              <input id="admin-add-is-admin" name="is_admin" type="checkbox" />
+              Administrator (full access)
+            </label>
+            <button type="submit" class="details-button">Create user</button>
+          </form>
+        </details>
+
+        <details class="admin-users-add-details" id="admin-users-edit-block">
+          <summary>Edit user</summary>
+          <form id="admin-user-edit-form" class="form admin-user-form">
+            <input type="hidden" id="admin-edit-id" name="user_id" value="" />
+            <div class="form-row two-cols">
+              <div>
+                <label for="admin-edit-first">First name</label>
+                <input id="admin-edit-first" type="text" required autocomplete="given-name" />
+              </div>
+              <div>
+                <label for="admin-edit-last">Last name</label>
+                <input id="admin-edit-last" type="text" required autocomplete="family-name" />
+              </div>
+            </div>
+            <label for="admin-edit-email">Email</label>
+            <input id="admin-edit-email" type="email" required autocomplete="email" />
+            <label for="admin-edit-password">New password (optional)</label>
+            <input id="admin-edit-password" type="password" autocomplete="new-password" placeholder="Leave blank to keep current" />
+            <label class="admin-users-checkbox-label">
+              <input id="admin-edit-is-admin" type="checkbox" />
+              Administrator (full access)
+            </label>
+            <div class="admin-users-form-actions">
+              <button type="submit" class="details-button">Save changes</button>
+              <button type="button" id="admin-edit-cancel" class="details-button details-button--secondary">Cancel</button>
+            </div>
+          </form>
+        </details>
+
+        <div class="admin-users-table-wrap">
+          <table class="admin-users-table" aria-label="Users list">
+            <thead>
+              <tr>
+                <th scope="col">Name</th>
+                <th scope="col">Email</th>
+                <th scope="col">Role</th>
+                <th scope="col">Actions</th>
+              </tr>
+            </thead>
+            <tbody id="admin-users-tbody"></tbody>
+          </table>
+        </div>
+      </section>
+    </main>
+
+    {% include 'footer.html' %}
+    <script src="{{ url_for('static', filename='scripts.js') }}"></script>
+  </body>
+</html>

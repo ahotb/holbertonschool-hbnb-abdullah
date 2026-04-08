@@ -38,6 +38,11 @@ def add_place_page():
     return render_template("add_place.html")
 
 
+@app.route("/admin_users.html")
+def admin_users_page():
+    return render_template("admin_users.html")
+
+
 # Flask-RESTX registers endpoint "root" on "/".
 # Reuse it to serve the frontend home page instead of returning 404.
 app.view_functions["root"] = index

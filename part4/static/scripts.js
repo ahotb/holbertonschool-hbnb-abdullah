@@ -44,6 +44,7 @@ function setHeaderVisibility(token) {
   const registerLink = document.getElementById("register-link");
   const logoutButton = document.getElementById("logout-button");
   const addPlaceLink = document.getElementById("add-place-link");
+  const adminUsersLink = document.getElementById("admin-users-link");
 
   const authenticated = Boolean(token);
   const admin = authenticated && isAdmin(token);
@@ -55,9 +56,29 @@ function setHeaderVisibility(token) {
     logoutButton.onclick = logout;
   }
   if (addPlaceLink) addPlaceLink.style.display = admin ? "inline-block" : "none";
+  if (adminUsersLink) adminUsersLink.style.display = admin ? "inline-block" : "none";
 }
 
 const DEFAULT_AMENITY_ICON = "/static/images/icon.png";
+
+/** Fixed order for the three gallery icons; any extra (text-only) amenities follow these when saving and displaying. */
+const STANDARD_AMENITY_ICON_NAMES = ["WiFi", "Bed", "Bathroom"];
+
+function sortAmenitiesForDisplay(amenities) {
+  if (!Array.isArray(amenities) || amenities.length === 0) return [];
+  const orderLower = STANDARD_AMENITY_ICON_NAMES.map((n) => n.toLowerCase());
+  const tier = (name) => {
+    const n = String(name || "").trim().toLowerCase();
+    const i = orderLower.indexOf(n);
+    return i === -1 ? 1000 : i;
+  };
+  return [...amenities].sort((a, b) => {
+    const ta = tier(a.name);
+    const tb = tier(b.name);
+    if (ta !== tb) return ta - tb;
+    return String(a.name || "").localeCompare(String(b.name || ""), undefined, { sensitivity: "base" });
+  });
+}
 
 function getAmenityIcon(name) {
   const key = String(name || "").toLowerCase();
@@ -77,10 +98,11 @@ function renderAmenityIcons(amenities) {
   if (!Array.isArray(amenities) || amenities.length === 0) {
     return "<p><strong>Amenities:</strong> None</p>";
   }
-  const amenityItems = amenities
+  const sorted = sortAmenitiesForDisplay(amenities);
+  const amenityItems = sorted
     .map((amenity) => {
-      const name = amenity.name || "Amenity";
-      const icon = getAmenityIcon(name);
+      const name = escapeHtml(amenity.name || "Amenity");
+      const icon = getAmenityIcon(amenity.name);
       return `<span class="amenity-item"><img class="amenity-icon" src="${icon}" alt="" loading="lazy"><span class="amenity-label">${name}</span></span>`;
     })
     .join("");
@@ -120,8 +142,9 @@ function renderAmenityPreview(amenities, limit = 4) {
   if (!Array.isArray(amenities) || amenities.length === 0) {
     return `<p class="amenities-preview amenities-preview-empty">Amenities: —</p>`;
   }
-  const slice = amenities.slice(0, limit);
-  const more = amenities.length - slice.length;
+  const sorted = sortAmenitiesForDisplay(amenities);
+  const slice = sorted.slice(0, limit);
+  const more = sorted.length - slice.length;
   const icons = slice
     .map((amenity) => {
       const name = escapeHtml(amenity.name || "Amenity");
@@ -155,6 +178,7 @@ function extractImageUrl(place) {
 function normalizeImageUrl(rawValue) {
   let value = String(rawValue || "").trim();
   if (!value) return "";
+  if (value.startsWith("data:image/")) return value;
   if (value.startsWith("http://") || value.startsWith("https://")) return value;
   value = value.replace(/^\.\//, "");
   if (value.startsWith("/static/")) return value;
@@ -172,6 +196,178 @@ function cleanDescription(description) {
 
 function buildPlaceDescription(imageUrl, city, country, description) {
   return `[Image: ${imageUrl || ""}] [Location: ${city || ""}, ${country || ""}] ${description || ""}`.trim();
+}
+
+const LISTING_IMAGE_MAX_BYTES = 2 * 1024 * 1024;
+
+let addPlaceListingImageDataUrl = null;
+let addPlaceListingImageRemoved = false;
+
+function updateAddPlaceListingPreviewFromState(editSnapshot) {
+  const preview = document.getElementById("place_listing_preview");
+  const emptyEl = document.getElementById("place_listing_preview_empty");
+  const urlInput = document.getElementById("place_listing_image_url");
+  if (!preview || !emptyEl) return;
+
+  let src = "";
+  if (!addPlaceListingImageRemoved) {
+    if (addPlaceListingImageDataUrl) {
+      src = addPlaceListingImageDataUrl;
+    } else if (urlInput?.value.trim()) {
+      src = normalizeImageUrl(urlInput.value.trim());
+    } else if (editSnapshot) {
+      const r = extractImageUrl(editSnapshot);
+      if (r) src = normalizeImageUrl(r);
+    }
+  }
+
+  if (src) {
+    preview.src = src;
+    preview.hidden = false;
+    emptyEl.hidden = true;
+  } else {
+    preview.removeAttribute("src");
+    preview.hidden = true;
+    emptyEl.hidden = false;
+  }
+}
+
+function getListingImageUrlForSubmit(editSnapshot) {
+  if (addPlaceListingImageRemoved) return "";
+  if (addPlaceListingImageDataUrl) return addPlaceListingImageDataUrl;
+  const url = document.getElementById("place_listing_image_url")?.value.trim() || "";
+  if (url) return normalizeImageUrl(url);
+  if (editSnapshot) {
+    const r = extractImageUrl(editSnapshot);
+    return r ? normalizeImageUrl(r) : "";
+  }
+  return "";
+}
+
+function syncAddPlaceListingImageFromPlace(place) {
+  addPlaceListingImageDataUrl = null;
+  addPlaceListingImageRemoved = false;
+  const fileInput = document.getElementById("place_listing_image_file");
+  if (fileInput) fileInput.value = "";
+  const urlInput = document.getElementById("place_listing_image_url");
+  const raw = place ? extractImageUrl(place) : "";
+  if (urlInput) {
+    if (raw && !String(raw).startsWith("data:")) {
+      urlInput.value = String(raw).trim();
+    } else {
+      urlInput.value = "";
+    }
+  }
+  updateAddPlaceListingPreviewFromState(place || null);
+}
+
+function resetAddPlaceListingImageAfterCreate() {
+  addPlaceListingImageDataUrl = null;
+  addPlaceListingImageRemoved = false;
+  const fileInput = document.getElementById("place_listing_image_file");
+  if (fileInput) fileInput.value = "";
+  const urlInput = document.getElementById("place_listing_image_url");
+  if (urlInput) urlInput.value = "";
+  updateAddPlaceListingPreviewFromState(null);
+}
+
+function readListingImageFile(file, onError, onSuccess) {
+  if (!file || !file.type.startsWith("image/")) {
+    if (onError) onError("Choose an image file.");
+    return;
+  }
+  if (file.size > LISTING_IMAGE_MAX_BYTES) {
+    if (onError) onError("Image must be 2 MB or smaller.");
+    return;
+  }
+  const reader = new FileReader();
+  reader.onload = () => {
+    const result = reader.result;
+    if (typeof result !== "string") {
+      if (onError) onError("Could not read that file.");
+      return;
+    }
+    addPlaceListingImageDataUrl = result;
+    addPlaceListingImageRemoved = false;
+    const urlInput = document.getElementById("place_listing_image_url");
+    if (urlInput) urlInput.value = "";
+    const msg = document.getElementById("add-place-message");
+    if (msg) msg.textContent = "";
+    if (onSuccess) onSuccess();
+  };
+  reader.onerror = () => {
+    if (onError) onError("Could not read that file.");
+  };
+  reader.readAsDataURL(file);
+}
+
+function wireAddPlaceListingImageControls(getEditSnapshot) {
+  const dropzone = document.getElementById("place_listing_dropzone");
+  const fileInput = document.getElementById("place_listing_image_file");
+  const urlInput = document.getElementById("place_listing_image_url");
+  const clearBtn = document.getElementById("place_listing_image_clear");
+  if (!dropzone || !fileInput) return;
+
+  const previewUpdate = () => updateAddPlaceListingPreviewFromState(getEditSnapshot());
+  const showFileError = (msg) => {
+    const box = document.getElementById("add-place-message");
+    if (box) box.textContent = msg;
+  };
+
+  dropzone.addEventListener("click", (e) => {
+    if (e.target === fileInput) return;
+    fileInput.click();
+  });
+  dropzone.addEventListener("keydown", (e) => {
+    if (e.key === "Enter" || e.key === " ") {
+      e.preventDefault();
+      fileInput.click();
+    }
+  });
+
+  ["dragenter", "dragover"].forEach((evt) => {
+    dropzone.addEventListener(evt, (e) => {
+      e.preventDefault();
+      e.stopPropagation();
+      dropzone.classList.add("listing-image-dropzone--active");
+    });
+  });
+  ["dragleave", "drop"].forEach((evt) => {
+    dropzone.addEventListener(evt, (e) => {
+      e.preventDefault();
+      e.stopPropagation();
+      dropzone.classList.remove("listing-image-dropzone--active");
+    });
+  });
+  dropzone.addEventListener("drop", (e) => {
+    const file = e.dataTransfer?.files?.[0];
+    if (file) readListingImageFile(file, showFileError, previewUpdate);
+  });
+
+  fileInput.addEventListener("change", () => {
+    const file = fileInput.files?.[0];
+    if (file) readListingImageFile(file, showFileError, previewUpdate);
+    fileInput.value = "";
+  });
+
+  if (urlInput) {
+    urlInput.addEventListener("input", () => {
+      addPlaceListingImageDataUrl = null;
+      addPlaceListingImageRemoved = false;
+      fileInput.value = "";
+      previewUpdate();
+    });
+  }
+
+  if (clearBtn) {
+    clearBtn.addEventListener("click", () => {
+      addPlaceListingImageRemoved = true;
+      addPlaceListingImageDataUrl = null;
+      if (urlInput) urlInput.value = "";
+      fileInput.value = "";
+      previewUpdate();
+    });
+  }
 }
 
 function getPlaceIdFromURL() {
@@ -302,34 +498,8 @@ function displayPlaceDetails(place, token = "") {
       const deleteBtn = document.getElementById("delete-place-button");
 
       if (editBtn) {
-        editBtn.onclick = async () => {
-          const title = prompt("New title", place.title || "");
-          if (title === null) return;
-          const city = prompt("City", (extractLocation(place).split(",")[0] || "").trim());
-          if (city === null) return;
-          const country = prompt("Country", (extractLocation(place).split(",")[1] || "").trim());
-          if (country === null) return;
-          const imageUrl = prompt("Image URL", normalizeImageUrl(extractImageUrl(place)));
-          if (imageUrl === null) return;
-          const description = prompt("Description", cleanDescription(place.description));
-          if (description === null) return;
-          const price = Number(prompt("Price per night", String(place.price || 0)));
-          const latitude = Number(prompt("Latitude", String(place.latitude || 0)));
-          const longitude = Number(prompt("Longitude", String(place.longitude || 0)));
-
-          try {
-            await fetchJson(`${window.location.origin}/api/v1/places/${place.id}`, "PUT", token, {
-              title,
-              description: buildPlaceDescription(normalizeImageUrl(imageUrl), city, country, description),
-              price,
-              latitude,
-              longitude,
-            });
-            const refreshed = await fetchJson(`${window.location.origin}/api/v1/places/${place.id}`, "GET", token);
-            displayPlaceDetails(refreshed, token);
-          } catch (error) {
-            alert(error.message || "Failed to update place.");
-          }
+        editBtn.onclick = () => {
+          window.location.href = `add_place.html?id=${encodeURIComponent(place.id)}`;
         };
       }
 
@@ -591,15 +761,7 @@ function setupReviewForm(token) {
       }
       try {
         await fetchJson(`${window.location.origin}/api/v1/reviews/`, "POST", token, { text, rating, place_id: placeId });
-        if (box) {
-          box.textContent = "Review submitted successfully!";
-          box.classList.add("success-message");
-        }
-        form.reset();
-        const ratingSelectAfter = document.getElementById("rating");
-        const starRow = document.getElementById("star-rating");
-        if (ratingSelectAfter) ratingSelectAfter.value = "5";
-        if (starRow) updateStarButtons(starRow, 5);
+        window.location.href = `place.html?id=${encodeURIComponent(placeId)}`;
       } catch (error) {
         if (box) box.textContent = error.message || "Failed to submit review.";
       }
@@ -607,6 +769,103 @@ function setupReviewForm(token) {
   };
 
   void boot();
+}
+
+const AMENITY_ICON_TO_NAME = {
+  "icon_wifi.png": "WiFi",
+  "icon_bed.png": "Bed",
+  "icon_bath.png": "Bathroom",
+};
+
+function buildAmenityNameListFromForm(iconFiles) {
+  const picked = new Set(iconFiles.map((f) => AMENITY_ICON_TO_NAME[f]).filter(Boolean));
+  return STANDARD_AMENITY_ICON_NAMES.filter((n) => picked.has(n));
+}
+
+function amenityNameToIconFilename(name) {
+  const n = String(name || "").trim().toLowerCase();
+  if (n === "wifi" || n === "wi-fi") return "icon_wifi.png";
+  if (n === "bed") return "icon_bed.png";
+  if (n === "bathroom" || n === "bath") return "icon_bath.png";
+  return null;
+}
+
+function populateAddPlaceForm(place) {
+  const titleEl = document.getElementById("place_title");
+  const priceEl = document.getElementById("place_price");
+  const cityEl = document.getElementById("place_city");
+  const countryEl = document.getElementById("place_country");
+  const latEl = document.getElementById("place_latitude");
+  const lngEl = document.getElementById("place_longitude");
+  const descEl = document.getElementById("place_description");
+  if (!titleEl || !place) return;
+
+  titleEl.value = place.title || "";
+  if (priceEl) priceEl.value = place.price != null ? String(place.price) : "";
+  const loc = extractLocation(place);
+  const parts = loc.split(",").map((s) => s.trim());
+  if (cityEl) cityEl.value = parts[0] || "";
+  if (countryEl) countryEl.value = parts.slice(1).join(", ") || "";
+  if (latEl) latEl.value = place.latitude != null ? String(place.latitude) : "";
+  if (lngEl) lngEl.value = place.longitude != null ? String(place.longitude) : "";
+  if (descEl) descEl.value = cleanDescription(place.description);
+
+  document.querySelectorAll('input[name="amenity_image_pick"]').forEach((cb) => {
+    cb.checked = false;
+  });
+  (place.amenities || []).forEach((a) => {
+    const fname = amenityNameToIconFilename(a.name);
+    if (fname) {
+      const cb = document.querySelector(`input[name="amenity_image_pick"][value="${fname}"]`);
+      if (cb) cb.checked = true;
+    }
+  });
+  syncAddPlaceListingImageFromPlace(place);
+}
+
+function amenityIdsPreservedFromPlaceWithoutIcons(place) {
+  const ids = [];
+  (place.amenities || []).forEach((a) => {
+    if (!a || !a.id) return;
+    if (!amenityNameToIconFilename(a.name)) ids.push(a.id);
+  });
+  return ids;
+}
+
+async function resolveAmenityIdsFromNames(names, token) {
+  const seen = new Set();
+  const uniqueNames = [];
+  names.filter(Boolean).forEach((n) => {
+    const k = n.toLowerCase();
+    if (seen.has(k)) return;
+    seen.add(k);
+    uniqueNames.push(n);
+  });
+  if (uniqueNames.length === 0) return [];
+
+  const list = await fetchJson(`${window.location.origin}/api/v1/amenities`, "GET", "");
+  if (!Array.isArray(list)) return [];
+
+  const byLower = {};
+  list.forEach((a) => {
+    if (a.name) byLower[String(a.name).toLowerCase()] = a.id;
+  });
+
+  const ids = [];
+  for (const name of uniqueNames) {
+    const key = name.toLowerCase();
+    let id = byLower[key];
+    if (!id) {
+      const created = await fetchJson(`${window.location.origin}/api/v1/amenities`, "POST", token, {
+        name,
+        description: "",
+      });
+      id = created.id;
+      byLower[key] = id;
+    }
+    ids.push(id);
+  }
+  return ids;
 }
 
 function setupAddPlaceForm(token) {
@@ -617,71 +876,322 @@ function setupAddPlaceForm(token) {
     window.location.href = "index.html";
     return;
   }
+
+  let editPlaceSnapshot = null;
+  let editPlaceId = "";
+  let addPlaceFormReady = !getPlaceIdFromURL();
+
+  wireAddPlaceListingImageControls(() => editPlaceSnapshot);
+  updateAddPlaceListingPreviewFromState(null);
+
   form.addEventListener("submit", async (event) => {
     event.preventDefault();
+    if (!addPlaceFormReady) {
+      if (box) box.textContent = "Please wait, loading place data…";
+      return;
+    }
     if (box) {
       box.textContent = "";
       box.classList.remove("success-message");
     }
     const city = document.getElementById("place_city")?.value.trim() || "";
     const country = document.getElementById("place_country")?.value.trim() || "";
-    const imageUrl = normalizeImageUrl(document.getElementById("place_image_url")?.value.trim() || "");
-    const amenityIdsRaw = document.getElementById("place_amenity_ids")?.value.trim() || "";
-    const amenityIds = amenityIdsRaw ? amenityIdsRaw.split(",").map((v) => v.trim()).filter(Boolean) : [];
     const description = document.getElementById("place_description")?.value.trim() || "";
-    const payload = {
-      title: document.getElementById("place_title")?.value.trim() || "",
-      description: buildPlaceDescription(imageUrl, city, country, description),
-      price: Number(document.getElementById("place_price")?.value || 0),
-      latitude: Number(document.getElementById("place_latitude")?.value || 0),
-      longitude: Number(document.getElementById("place_longitude")?.value || 0),
-      amenities: amenityIds,
-    };
+    const price = Number(document.getElementById("place_price")?.value ?? NaN);
+    if (!Number.isFinite(price) || price < 0) {
+      if (box) box.textContent = "Enter a valid price.";
+      return;
+    }
+
+    const iconFiles = [...document.querySelectorAll('input[name="amenity_image_pick"]:checked')].map((el) => el.value);
+    const amenityNameList = buildAmenityNameListFromForm(iconFiles);
+
     try {
+      let amenityIds = await resolveAmenityIdsFromNames(amenityNameList, token);
+      if (editPlaceId && editPlaceSnapshot) {
+        const preserved = amenityIdsPreservedFromPlaceWithoutIcons(editPlaceSnapshot);
+        const seen = new Set(amenityIds);
+        preserved.forEach((id) => {
+          if (!seen.has(id)) {
+            amenityIds.push(id);
+            seen.add(id);
+          }
+        });
+      }
+      const listingImageUrl = getListingImageUrlForSubmit(editPlaceSnapshot);
+
+      const payload = {
+        title: document.getElementById("place_title")?.value.trim() || "",
+        description: buildPlaceDescription(listingImageUrl, city, country, description),
+        price,
+        latitude: Number(document.getElementById("place_latitude")?.value || 0),
+        longitude: Number(document.getElementById("place_longitude")?.value || 0),
+        amenities: amenityIds,
+      };
+
+      if (editPlaceId) {
+        await fetchJson(`${window.location.origin}/api/v1/places/${editPlaceId}`, "PUT", token, payload);
+        window.location.href = `place.html?id=${encodeURIComponent(editPlaceId)}`;
+        return;
+      }
+
       await fetchJson(`${window.location.origin}/api/v1/places/`, "POST", token, payload);
       if (box) {
         box.textContent = "Place created successfully.";
         box.classList.add("success-message");
       }
       form.reset();
+      resetAddPlaceListingImageAfterCreate();
+      document.querySelectorAll('input[name="amenity_image_pick"]').forEach((cb) => {
+        cb.checked = false;
+      });
     } catch (error) {
-      if (box) box.textContent = error.message || "Failed to create place.";
+      if (box) box.textContent = error.message || "Failed to save place.";
     }
+  });
+
+  (async () => {
+    const pid = getPlaceIdFromURL();
+    if (!pid) return;
+    try {
+      const place = await fetchJson(`${window.location.origin}/api/v1/places/${pid}`, "GET", token);
+      editPlaceSnapshot = place;
+      editPlaceId = pid;
+      populateAddPlaceForm(place);
+      const h = document.getElementById("add-place-heading");
+      if (h) h.textContent = "Edit Place";
+      const btn = document.getElementById("add-place-submit-btn");
+      if (btn) btn.textContent = "Save changes";
+      document.title = "HBnB - Edit Place";
+    } catch (e) {
+      if (box) {
+        box.textContent = e.message || "Unable to load place for editing.";
+        box.classList.remove("success-message");
+      }
+      const submitBtn = document.getElementById("add-place-submit-btn");
+      if (submitBtn) submitBtn.disabled = true;
+      return;
+    }
+    addPlaceFormReady = true;
+  })();
+}
+
+function setupPlaceBackButton() {
+  const btn = document.getElementById("place-back-button");
+  if (!btn) return;
+  btn.addEventListener("click", () => {
+    window.location.href = "index.html";
   });
 }
 
-function setupAmenityForm(token) {
-  const form = document.getElementById("amenity-form");
-  const box = document.getElementById("amenity-message");
-  if (!form) return;
-  if (!token || !isAdmin(token)) {
-    form.style.display = "none";
+function setupAdminUsersPage(token) {
+  const tbody = document.getElementById("admin-users-tbody");
+  const countEl = document.getElementById("admin-users-count");
+  const searchInput = document.getElementById("admin-users-search");
+  const roleFilter = document.getElementById("admin-users-role-filter");
+  const applyBtn = document.getElementById("admin-users-apply-filters");
+  const msg = document.getElementById("admin-users-message");
+  const addForm = document.getElementById("admin-user-add-form");
+  const addBlock = document.getElementById("admin-users-add-block");
+  const editForm = document.getElementById("admin-user-edit-form");
+  const editBlock = document.getElementById("admin-users-edit-block");
+  const editCancel = document.getElementById("admin-edit-cancel");
+  if (!tbody) return;
+  if (!token) {
+    window.location.href = `login.html?next=${encodeURIComponent("admin_users.html")}`;
+    return;
+  }
+  if (!isAdmin(token)) {
+    window.location.href = "index.html";
     return;
   }
 
-  form.addEventListener("submit", async (event) => {
-    event.preventDefault();
-    if (box) {
-      box.textContent = "";
-      box.classList.remove("success-message");
-    }
-    const name = document.getElementById("amenity_name")?.value.trim() || "";
-    const description = document.getElementById("amenity_description")?.value.trim() || "";
+  let lastLoadedUsers = [];
+
+  const flash = (text, ok) => {
+    if (!msg) return;
+    msg.textContent = text || "";
+    msg.classList.toggle("success-message", Boolean(ok));
+  };
+
+  const usersUrlWithQuery = () => {
+    const params = new URLSearchParams();
+    const q = searchInput ? searchInput.value.trim() : "";
+    const role = roleFilter ? roleFilter.value : "all";
+    if (q) params.set("q", q);
+    if (role && role !== "all") params.set("role", role);
+    const qs = params.toString();
+    const base = `${window.location.origin}/api/v1/users/`;
+    return qs ? `${base}?${qs}` : base;
+  };
+
+  const bindTableActions = () => {
+    const me = getJwtSubject(token);
+    tbody.querySelectorAll(".admin-users-btn-edit").forEach((btn) => {
+      btn.addEventListener("click", () => {
+        const id = btn.getAttribute("data-id");
+        const user = lastLoadedUsers.find((u) => u.id === id);
+        if (!user || !editForm || !editBlock) return;
+        if (addBlock) addBlock.open = false;
+        const editSummary = editBlock.querySelector("summary");
+        if (editSummary) editSummary.textContent = `Edit user: ${user.email || user.id}`;
+        document.getElementById("admin-edit-id").value = user.id;
+        document.getElementById("admin-edit-first").value = user.first_name || "";
+        document.getElementById("admin-edit-last").value = user.last_name || "";
+        document.getElementById("admin-edit-email").value = user.email || "";
+        document.getElementById("admin-edit-password").value = "";
+        document.getElementById("admin-edit-is-admin").checked = Boolean(user.is_admin);
+        editBlock.open = true;
+        editBlock.scrollIntoView({ behavior: "smooth", block: "nearest" });
+      });
+    });
+    tbody.querySelectorAll(".admin-users-btn-delete").forEach((btn) => {
+      btn.addEventListener("click", async () => {
+        const id = btn.getAttribute("data-id");
+        if (!id || id === me) return;
+        const ok = confirm("Delete this user? This also removes their reviews and places.");
+        if (!ok) return;
+        try {
+          await fetchJson(`${window.location.origin}/api/v1/users/${id}`, "DELETE", token);
+          flash("User deleted.", true);
+          await loadUsers();
+        } catch (e) {
+          flash(e.message || "Delete failed.", false);
+        }
+      });
+    });
+  };
+
+  const renderTable = () => {
+    const me = getJwtSubject(token);
+    tbody.innerHTML = "";
+    lastLoadedUsers.forEach((u) => {
+      const tr = document.createElement("tr");
+      const name = `${u.first_name || ""} ${u.last_name || ""}`.trim() || "—";
+      const isSelf = String(u.id) === String(me);
+      const roleCell = u.is_admin ? '<span class="admin-role-badge">Admin</span>' : "Guest";
+      tr.innerHTML = `
+        <td>${escapeHtml(name)}</td>
+        <td>${escapeHtml(u.email || "")}</td>
+        <td>${roleCell}</td>
+        <td class="admin-users-actions">
+          <button type="button" class="details-button admin-users-btn-edit" data-id="${escapeHtml(u.id)}">Edit</button>
+          <button type="button" class="details-button details-button--danger admin-users-btn-delete" data-id="${escapeHtml(
+            u.id
+          )}" ${isSelf ? "disabled" : ""}>Delete</button>
+        </td>`;
+      tbody.appendChild(tr);
+    });
+    if (countEl) countEl.textContent = String(lastLoadedUsers.length);
+    bindTableActions();
+  };
+
+  const loadUsers = async () => {
     try {
-      await fetchJson(`${window.location.origin}/api/v1/amenities`, "POST", token, { name, description });
-      if (box) {
-        box.textContent = "Amenity created successfully.";
-        box.classList.add("success-message");
-      }
-      form.reset();
-    } catch (error) {
-      if (box) box.textContent = error.message || "Failed to create amenity.";
+      flash("", false);
+      const data = await fetchJson(usersUrlWithQuery(), "GET", token);
+      lastLoadedUsers = Array.isArray(data) ? data : [];
+      renderTable();
+    } catch (e) {
+      lastLoadedUsers = [];
+      tbody.innerHTML = "";
+      if (countEl) countEl.textContent = "0";
+      flash(e.message || "Unable to load users.", false);
     }
-  });
+  };
+
+  if (applyBtn) applyBtn.addEventListener("click", () => void loadUsers());
+  if (roleFilter) roleFilter.addEventListener("change", () => void loadUsers());
+  if (searchInput) {
+    searchInput.addEventListener("keydown", (e) => {
+      if (e.key === "Enter") {
+        e.preventDefault();
+        void loadUsers();
+      }
+    });
+  }
+
+  if (addForm) {
+    addForm.addEventListener("submit", async (e) => {
+      e.preventDefault();
+      const first = document.getElementById("admin-add-first")?.value.trim() || "";
+      const last = document.getElementById("admin-add-last")?.value.trim() || "";
+      const email = document.getElementById("admin-add-email")?.value.trim() || "";
+      const password = document.getElementById("admin-add-password")?.value || "";
+      const adminCb = document.getElementById("admin-add-is-admin");
+      try {
+        await fetchJson(`${window.location.origin}/api/v1/users/`, "POST", token, {
+          first_name: first,
+          last_name: last,
+          email,
+          password,
+          is_admin: Boolean(adminCb?.checked),
+        });
+        addForm.reset();
+        flash("User created.", true);
+        await loadUsers();
+      } catch (err) {
+        flash(err.message || "Could not create user.", false);
+      }
+    });
+  }
+
+  const resetEditSummary = () => {
+    const editSummary = editBlock?.querySelector("summary");
+    if (editSummary) editSummary.textContent = "Edit user";
+  };
+
+  if (editForm) {
+    editForm.addEventListener("submit", async (e) => {
+      e.preventDefault();
+      const id = document.getElementById("admin-edit-id")?.value;
+      if (!id) return;
+      const payload = {
+        first_name: document.getElementById("admin-edit-first")?.value.trim() || "",
+        last_name: document.getElementById("admin-edit-last")?.value.trim() || "",
+        email: document.getElementById("admin-edit-email")?.value.trim() || "",
+        is_admin: Boolean(document.getElementById("admin-edit-is-admin")?.checked),
+      };
+      const pw = document.getElementById("admin-edit-password")?.value || "";
+      if (pw) payload.password = pw;
+      try {
+        await fetchJson(`${window.location.origin}/api/v1/users/${id}`, "PUT", token, payload);
+        if (editBlock) {
+          editBlock.open = false;
+          resetEditSummary();
+        }
+        flash("User updated.", true);
+        await loadUsers();
+      } catch (err) {
+        flash(err.message || "Could not update user.", false);
+      }
+    });
+  }
+
+  if (editCancel && editBlock) {
+    editCancel.addEventListener("click", () => {
+      editBlock.open = false;
+      resetEditSummary();
+      flash("", false);
+    });
+  }
+
+  if (addBlock && editBlock) {
+    addBlock.addEventListener("toggle", () => {
+      if (addBlock.open) editBlock.open = false;
+    });
+    editBlock.addEventListener("toggle", () => {
+      if (editBlock.open) addBlock.open = false;
+      if (!editBlock.open) resetEditSummary();
+    });
+  }
+
+  void loadUsers();
 }
 
 document.addEventListener("DOMContentLoaded", async () => {
   const token = getCookie("token");
+  setupPlaceBackButton();
   setHeaderVisibility(token);
 
   setupLoginForm();
@@ -689,7 +1199,7 @@ document.addEventListener("DOMContentLoaded", async () => {
   setupPriceFilter();
   setupReviewForm(token);
   setupAddPlaceForm(token);
-  setupAmenityForm(token);
+  setupAdminUsersPage(token);
 
   if (document.getElementById("places-list")) {
     try {

@@ -10,51 +10,115 @@
   <body>
     {% include 'header.html' %}
 
-    <main>
+    <main class="admin-add-place">
       <section class="add-review">
-        <h1>Add Place</h1>
-        <form id="add-place-form" class="form" method="post" action="#">
-          <label for="place_title">Title</label>
-          <input id="place_title" name="title" type="text" required />
+        <h1 id="add-place-heading">Add Place</h1>
 
-          <label for="place_country">Country</label>
-          <input id="place_country" name="country" type="text" required />
+        <form id="add-place-form" class="form form-add-place" method="post" action="#">
+          <fieldset class="form-fieldset">
+            <legend>1. Place name</legend>
+            <label for="place_title">Name</label>
+            <input id="place_title" name="title" type="text" required placeholder="e.g. Downtown studio" />
+          </fieldset>
 
-          <label for="place_city">City</label>
-          <input id="place_city" name="city" type="text" required />
+          <fieldset class="form-fieldset">
+            <legend>2. Amenity</legend>
+            <p class="helper-text image-gallery-hint">Select one or more icons; they appear as amenities on the listing (WiFi, bed, bath).</p>
+            <div class="image-picker-grid" id="amenity-image-picker" role="group" aria-label="Amenity icons">
+              {% for img in ['icon_wifi.png', 'icon_bed.png', 'icon_bath.png'] %}
+              <label class="image-picker-option">
+                <input type="checkbox" name="amenity_image_pick" value="{{ img }}" />
+                <span class="image-picker-tile">
+                  <img src="{{ url_for('static', filename='images/' ~ img) }}" alt="" width="72" height="72" loading="lazy" />
+                  <span class="image-picker-filename">{{ img }}</span>
+                </span>
+              </label>
+              {% endfor %}
+            </div>
+          </fieldset>
 
-          <label for="place_description">Description</label>
-          <textarea id="place_description" name="description" rows="4" required></textarea>
+          <fieldset class="form-fieldset">
+            <legend>3. Listing photo</legend>
+            <p class="helper-text">Paste an image URL, or drag and drop / choose a file from your device (stored with the listing).</p>
+            <label for="place_listing_image_url">Image URL (optional)</label>
+            <input
+              id="place_listing_image_url"
+              name="listing_image_url"
+              type="text"
+              inputmode="url"
+              placeholder="https://… or /static/images/…"
+              autocomplete="off"
+            />
+            <div
+              id="place_listing_dropzone"
+              class="listing-image-dropzone"
+              tabindex="0"
+              role="button"
+              aria-label="Drop an image here or click to browse"
+            >
+              <input
+                id="place_listing_image_file"
+                class="listing-image-file-input"
+                type="file"
+                accept="image/*"
+                aria-label="Choose image file"
+              />
+              <span class="listing-image-dropzone-text">Drop image here or <strong>browse</strong></span>
+              <span class="listing-image-dropzone-hint">PNG, JPEG, WebP, GIF — max 2&nbsp;MB</span>
+            </div>
+            <div class="listing-image-preview-row">
+              <div class="listing-image-preview-wrap">
+                <img id="place_listing_preview" class="listing-image-preview" alt="" width="360" height="360" hidden />
+                <p id="place_listing_preview_empty" class="listing-image-preview-empty">No photo yet</p>
+              </div>
+              <button type="button" id="place_listing_image_clear" class="listing-image-clear details-button details-button--secondary">
+                Clear photo
+              </button>
+            </div>
+          </fieldset>
 
-          <label for="place_image_url">Image URL (one image)</label>
-          <input id="place_image_url" name="image_url" type="text" placeholder="https://example.com/place.jpg or logo.png" />
+          <fieldset class="form-fieldset">
+            <legend>4. Price</legend>
+            <label for="place_price">Price per night (USD)</label>
+            <input id="place_price" name="price" type="number" min="1" step="1" required />
+          </fieldset>
 
-          <label for="place_amenity_ids">Amenity IDs (comma separated, optional)</label>
-          <input id="place_amenity_ids" name="amenity_ids" type="text" placeholder="id1,id2,id3" />
+          <fieldset class="form-fieldset">
+            <legend>5. Location</legend>
+            <div class="form-row two-cols">
+              <div>
+                <label for="place_city">City</label>
+                <input id="place_city" name="city" type="text" required placeholder="City" />
+              </div>
+              <div>
+                <label for="place_country">Country</label>
+                <input id="place_country" name="country" type="text" required placeholder="Country" />
+              </div>
+            </div>
+          </fieldset>
 
-          <label for="place_price">Price per night</label>
-          <input id="place_price" name="price" type="number" min="1" step="1" required />
+          <fieldset class="form-fieldset">
+            <legend>6. Coordinates (latitude &amp; longitude)</legend>
+            <div class="form-row two-cols">
+              <div>
+                <label for="place_latitude">Latitude</label>
+                <input id="place_latitude" name="latitude" type="number" step="0.000001" required placeholder="e.g. 24.7136" />
+              </div>
+              <div>
+                <label for="place_longitude">Longitude</label>
+                <input id="place_longitude" name="longitude" type="number" step="0.000001" required placeholder="e.g. 46.6753" />
+              </div>
+            </div>
+          </fieldset>
 
-          <label for="place_latitude">Latitude</label>
-          <input id="place_latitude" name="latitude" type="number" step="0.000001" required />
+          <fieldset class="form-fieldset">
+            <legend>7. Description</legend>
+            <label for="place_description">Description</label>
+            <textarea id="place_description" name="description" rows="5" required placeholder="Describe the place for guests"></textarea>
+          </fieldset>
 
-          <label for="place_longitude">Longitude</label>
-          <input id="place_longitude" name="longitude" type="number" step="0.000001" required />
-
-          <button type="submit" class="details-button">Create place</button>
+          <button id="add-place-submit-btn" type="submit" class="details-button">Create place</button>
           <p id="add-place-message" class="error-message" aria-live="polite"></p>
-        </form>
-
-        <h2>Create Amenity (Admin)</h2>
-        <form id="amenity-form" class="form" method="post" action="#">
-          <label for="amenity_name">Amenity name</label>
-          <input id="amenity_name" name="amenity_name" type="text" required />
-
-          <label for="amenity_description">Amenity description</label>
-          <input id="amenity_description" name="amenity_description" type="text" />
-
-          <button type="submit" class="details-button">Create amenity</button>
-          <p id="amenity-message" class="error-message" aria-live="polite"></p>
         </form>
       </section>
     </main>

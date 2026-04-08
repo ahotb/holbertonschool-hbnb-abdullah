@@ -1,5 +1,6 @@
 from flask_restx import Namespace, Resource, fields
 from flask import request
+from sqlalchemy import or_
 from app.models.user import User
 from app import db
 from flask_jwt_extended import create_access_token, jwt_required, get_jwt_identity, get_jwt
@@ -79,6 +80,34 @@ class Register(Resource):
 @api.route('/')
 class UserList(Resource):
     @jwt_required()
+    def get(self):
+        """List users (admin only). Query: ?q= free-text search, ?role=admin|user"""
+        claims = get_jwt()
+        if not claims.get('is_admin'):
+            return {"error": "Admin privileges required"}, 403
+
+        q = (request.args.get("q") or "").strip()
+        role = (request.args.get("role") or "").strip().lower()
+        query = User.query
+
+        if q:
+            pattern = f"%{q}%"
+            query = query.filter(
+                or_(
+                    User.email.ilike(pattern),
+                    User.first_name.ilike(pattern),
+                    User.last_name.ilike(pattern),
+                )
+            )
+        if role == "admin":
+            query = query.filter_by(is_admin=True)
+        elif role == "user":
+            query = query.filter_by(is_admin=False)
+
+        users = query.order_by(User.created_at.desc()).all()
+        return [u.to_dict() for u in users], 200
+
+    @jwt_required()
     @api.expect(user_create_model)
     def post(self):
         """Create a new user (admin only)"""
@@ -146,13 +175,46 @@ class UserResource(Resource):
                 return {"error": "Email already in use"}, 400
             user.email = new_email
 
+        if is_admin and 'is_admin' in data:
+            new_admin = bool(data['is_admin'])
+            if not new_admin and str(user_id) == str(current_user_id):
+                admin_count = User.query.filter_by(is_admin=True).count()
+                if admin_count <= 1:
+                    return {"error": "Cannot remove admin role from the only admin account"}, 400
+            user.is_admin = new_admin
+
         # Efficiently and securely update fields (including automatic password hashing)
         update_data = {}
         if 'first_name' in data: update_data['first_name'] = data['first_name']
         if 'last_name' in data: update_data['last_name'] = data['last_name']
-        if 'password' in data: update_data['password'] = data['password']
-        
+        if 'password' in data and data['password']:
+            update_data['password'] = data['password']
+
         user.update_info(**update_data)
 
         db.session.commit()
         return user.to_dict(), 200
+
+    @jwt_required()
+    def delete(self, user_id):
+        """Delete a user (admin only)."""
+        claims = get_jwt()
+        if not claims.get('is_admin'):
+            return {"error": "Admin privileges required"}, 403
+
+        current_user_id = get_jwt_identity()
+        if str(current_user_id) == str(user_id):
+            return {"error": "You cannot delete your own account"}, 400
+
+        user = User.query.filter_by(id=user_id).first()
+        if not user:
+            return {"error": "User not found"}, 404
+
+        if user.is_admin:
+            admin_count = User.query.filter_by(is_admin=True).count()
+            if admin_count <= 1:
+                return {"error": "Cannot delete the last admin account"}, 400
+
+        db.session.delete(user)
+        db.session.commit()
+        return {}, 204

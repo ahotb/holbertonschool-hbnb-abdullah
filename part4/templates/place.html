@@ -10,7 +10,10 @@
   <body>
     {% include 'header.html' %}
 
-    <main>
+    <main class="main-place-detail">
+      <button type="button" id="place-back-button" class="place-back-button" aria-label="Back to home and listings" title="Back to home">
+        <span class="place-back-arrow" aria-hidden="true">←</span>
+      </button>
       <section id="place-details" class="place-details">
         <!-- Place details are injected by scripts.js -->
       </section>
