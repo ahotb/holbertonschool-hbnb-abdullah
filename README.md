@@ -40,4 +40,6 @@ python -m pytest -q
 
 ## Author
 
-- Abdullah
+- Abdullah Manahi
+- Mohammed Alabdali
+- Mousa Alqarni
