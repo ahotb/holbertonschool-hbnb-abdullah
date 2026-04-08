@@ -109,6 +109,10 @@ main {
   font-size: 14px;
 }
 
+.success-message {
+  color: #15803d;
+}
+
 input,
 textarea,
 select {

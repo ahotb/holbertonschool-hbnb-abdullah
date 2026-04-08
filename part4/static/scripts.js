@@ -160,6 +160,75 @@ async function fetchPlaceDetails(token, placeId) {
   displayPlaceDetails(place);
 }
 
+async function submitReview(token, placeId, reviewText, rating) {
+  const response = await fetch(`${window.location.origin}/api/v1/reviews/`, {
+    method: "POST",
+    headers: {
+      "Content-Type": "application/json",
+      Authorization: `Bearer ${token}`,
+    },
+    body: JSON.stringify({
+      text: reviewText,
+      rating,
+      place_id: placeId,
+    }),
+  });
+
+  const data = await response.json().catch(() => ({}));
+  if (!response.ok) {
+    throw new Error(data.error || "Failed to submit review");
+  }
+  return data;
+}
+
+function setupReviewForm(token) {
+  const reviewForm = document.getElementById("review-form");
+  const messageBox = document.getElementById("review-message");
+  if (!reviewForm) {
+    return;
+  }
+
+  if (!token) {
+    window.location.href = "index.html";
+    return;
+  }
+
+  const placeId = getPlaceIdFromURL();
+  if (!placeId) {
+    if (messageBox) {
+      messageBox.textContent = "Missing place id in URL.";
+    }
+    return;
+  }
+
+  reviewForm.addEventListener("submit", async (event) => {
+    event.preventDefault();
+
+    if (messageBox) {
+      messageBox.textContent = "";
+      messageBox.classList.remove("success-message");
+    }
+
+    const commentInput = document.getElementById("comment");
+    const ratingInput = document.getElementById("rating");
+    const reviewText = commentInput ? commentInput.value.trim() : "";
+    const rating = ratingInput ? Number(ratingInput.value) : 0;
+
+    try {
+      await submitReview(token, placeId, reviewText, rating);
+      if (messageBox) {
+        messageBox.textContent = "Review submitted successfully!";
+        messageBox.classList.add("success-message");
+      }
+      reviewForm.reset();
+    } catch (error) {
+      if (messageBox) {
+        messageBox.textContent = error.message || "Failed to submit review.";
+      }
+    }
+  });
+}
+
 function setupLoginForm() {
   const loginForm = document.getElementById("login-form");
   const errorBox = document.getElementById("login-error");
@@ -219,6 +288,7 @@ document.addEventListener("DOMContentLoaded", async () => {
   const token = setLoginVisibility();
   setupLoginForm();
   setupPriceFilter();
+  setupReviewForm(token);
 
   if (document.getElementById("places-list")) {
     try {

@@ -13,7 +13,7 @@
     <main>
       <section class="add-review">
         <h1>Add Review</h1>
-        <form class="form" method="post" action="#">
+        <form id="review-form" class="form" method="post" action="#">
           <label for="comment">Comment</label>
           <textarea id="comment" name="comment" rows="5" required></textarea>
 
@@ -28,10 +28,12 @@
           </select>
 
           <button type="submit" class="details-button">Submit Review</button>
+          <p id="review-message" class="error-message" aria-live="polite"></p>
         </form>
       </section>
     </main>
 
     {% include 'footer.html' %}
+    <script src="{{ url_for('static', filename='scripts.js') }}"></script>
   </body>
 </html>
