@@ -20,6 +20,44 @@ function setLoginVisibility() {
   return token;
 }
 
+function getAmenityIcon(name) {
+  const key = String(name || "").toLowerCase();
+  if (key.includes("wifi")) {
+    return "/static/images/icon_wifi.png";
+  }
+  if (key.includes("bed")) {
+    return "/static/images/icon_bed.png";
+  }
+  if (key.includes("bath")) {
+    return "/static/images/icon_bath.png";
+  }
+  return "";
+}
+
+function renderAmenityIcons(amenities) {
+  if (!Array.isArray(amenities) || amenities.length === 0) {
+    return "<p><strong>Amenities:</strong> None</p>";
+  }
+
+  const amenityItems = amenities
+    .map((amenity) => {
+      const amenityName = amenity.name || "Amenity";
+      const icon = getAmenityIcon(amenityName);
+      if (!icon) {
+        return `<span class="amenity-label">${amenityName}</span>`;
+      }
+      return `
+        <span class="amenity-item">
+          <img class="amenity-icon" src="${icon}" alt="${amenityName} icon">
+          <span class="amenity-label">${amenityName}</span>
+        </span>
+      `;
+    })
+    .join("");
+
+  return `<div class="amenities-row"><strong>Amenities:</strong> ${amenityItems}</div>`;
+}
+
 function applyPriceFilter() {
   const filter = document.getElementById("price-filter");
   const cards = document.querySelectorAll("#places-list .place-card");
@@ -53,12 +91,14 @@ function displayPlaces(places) {
     const description = place.description || "No description available.";
     const lat = place.latitude ?? "-";
     const lng = place.longitude ?? "-";
+    const amenities = Array.isArray(place.amenities) ? place.amenities : [];
 
     card.innerHTML = `
       <h2>${title}</h2>
       <p>${description}</p>
       <p><strong>Location:</strong> ${lat}, ${lng}</p>
       <p><strong>Price per night:</strong> $${price}</p>
+      ${renderAmenityIcons(amenities)}
       <a class="details-button" href="place.html?id=${place.id}">View Details</a>
     `;
     placesList.appendChild(card);
@@ -114,9 +154,7 @@ function displayPlaceDetails(place) {
       <p><strong>Host:</strong> ${owner}</p>
       <p><strong>Price per night:</strong> $${price}</p>
       <p><strong>Description:</strong> ${description}</p>
-      <p><strong>Amenities:</strong> ${
-        amenities.length > 0 ? amenities.map((a) => a.name).join(", ") : "None"
-      }</p>
+      ${renderAmenityIcons(amenities)}
     </div>
   `;
 

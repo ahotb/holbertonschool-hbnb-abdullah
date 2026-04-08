@@ -92,6 +92,30 @@ main {
   margin: 8px 0;
 }
 
+.amenities-row {
+  margin: 8px 0;
+  display: flex;
+  align-items: center;
+  flex-wrap: wrap;
+  gap: 10px;
+}
+
+.amenity-item {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+}
+
+.amenity-icon {
+  width: 18px;
+  height: 18px;
+  object-fit: contain;
+}
+
+.amenity-label {
+  font-size: 14px;
+}
+
 .form {
   display: grid;
   gap: 10px;
