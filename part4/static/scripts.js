@@ -59,7 +59,7 @@ function displayPlaces(places) {
       <p>${description}</p>
       <p><strong>Location:</strong> ${lat}, ${lng}</p>
       <p><strong>Price per night:</strong> $${price}</p>
-      <a class="details-button" href="place.html">View Details</a>
+      <a class="details-button" href="place.html?id=${place.id}">View Details</a>
     `;
     placesList.appendChild(card);
   });
@@ -84,6 +84,80 @@ async function fetchPlaces(token) {
 
   const places = await response.json();
   displayPlaces(Array.isArray(places) ? places : []);
+}
+
+function getPlaceIdFromURL() {
+  const params = new URLSearchParams(window.location.search);
+  return params.get("id") || params.get("place_id") || "";
+}
+
+function displayPlaceDetails(place) {
+  const detailsSection = document.getElementById("place-details");
+  const reviewsList = document.getElementById("reviews-list");
+  const addReviewLink = document.getElementById("add-review-link");
+  if (!detailsSection || !reviewsList) {
+    return;
+  }
+
+  const title = place.title || "Untitled place";
+  const owner = place.owner
+    ? `${place.owner.first_name || ""} ${place.owner.last_name || ""}`.trim()
+    : "Unknown host";
+  const price = Number(place.price || 0);
+  const description = place.description || "No description available.";
+  const amenities = Array.isArray(place.amenities) ? place.amenities : [];
+  const reviews = Array.isArray(place.reviews) ? place.reviews : [];
+
+  detailsSection.innerHTML = `
+    <h1>${title}</h1>
+    <div class="place-info">
+      <p><strong>Host:</strong> ${owner}</p>
+      <p><strong>Price per night:</strong> $${price}</p>
+      <p><strong>Description:</strong> ${description}</p>
+      <p><strong>Amenities:</strong> ${
+        amenities.length > 0 ? amenities.map((a) => a.name).join(", ") : "None"
+      }</p>
+    </div>
+  `;
+
+  reviewsList.innerHTML = "";
+  if (reviews.length === 0) {
+    reviewsList.innerHTML = "<p>No reviews yet.</p>";
+  } else {
+    reviews.forEach((review) => {
+      const reviewCard = document.createElement("article");
+      reviewCard.className = "review-card";
+      reviewCard.innerHTML = `
+        <p>"${review.text || ""}"</p>
+        <p><strong>User:</strong> ${review.user_id || "Unknown user"}</p>
+        <p><strong>Rating:</strong> ${review.rating || 0}/5</p>
+      `;
+      reviewsList.appendChild(reviewCard);
+    });
+  }
+
+  if (addReviewLink && place.id) {
+    addReviewLink.href = `add_review.html?place_id=${place.id}`;
+  }
+}
+
+async function fetchPlaceDetails(token, placeId) {
+  const headers = {};
+  if (token) {
+    headers.Authorization = `Bearer ${token}`;
+  }
+
+  const response = await fetch(`${window.location.origin}/api/v1/places/${placeId}`, {
+    method: "GET",
+    headers,
+  });
+
+  if (!response.ok) {
+    throw new Error("Failed to fetch place details");
+  }
+
+  const place = await response.json();
+  displayPlaceDetails(place);
 }
 
 function setupLoginForm() {
@@ -153,6 +227,28 @@ document.addEventListener("DOMContentLoaded", async () => {
       const placesList = document.getElementById("places-list");
       if (placesList) {
         placesList.innerHTML = "<p>Unable to load places right now.</p>";
+      }
+    }
+  }
+
+  const addReviewSection = document.getElementById("add-review");
+  if (addReviewSection) {
+    addReviewSection.style.display = token ? "block" : "none";
+
+    const placeId = getPlaceIdFromURL();
+    const detailsSection = document.getElementById("place-details");
+    if (!placeId) {
+      if (detailsSection) {
+        detailsSection.innerHTML = "<p>Missing place id in URL.</p>";
+      }
+      return;
+    }
+
+    try {
+      await fetchPlaceDetails(token, placeId);
+    } catch (error) {
+      if (detailsSection) {
+        detailsSection.innerHTML = "<p>Unable to load place details right now.</p>";
       }
     }
   }

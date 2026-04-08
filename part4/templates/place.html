@@ -11,36 +11,21 @@
     {% include 'header.html' %}
 
     <main>
-      <section class="place-details">
-        <h1>Sea View Apartment</h1>
-        <div class="place-info">
-          <p><strong>Host:</strong> Alice Owner</p>
-          <p><strong>Price per night:</strong> $120</p>
-          <p><strong>Description:</strong> Bright apartment with sea view and close beach access.</p>
-          <p><strong>Amenities:</strong> WiFi, Air Conditioning, Balcony</p>
-        </div>
+      <section id="place-details" class="place-details">
+        <!-- Place details are injected by scripts.js -->
       </section>
 
-      <section aria-label="Reviews">
+      <section id="place-reviews" aria-label="Reviews">
         <h2>Reviews</h2>
-        <article class="review-card">
-          <p>"Amazing place and very clean."</p>
-          <p><strong>User:</strong> Bob Reviewer</p>
-          <p><strong>Rating:</strong> 5/5</p>
-        </article>
-
-        <article class="review-card">
-          <p>"Good location, easy check-in."</p>
-          <p><strong>User:</strong> Nora Guest</p>
-          <p><strong>Rating:</strong> 4/5</p>
-        </article>
+        <div id="reviews-list"></div>
       </section>
 
-      <section class="add-review">
-        <a class="details-button" href="add_review.html">Add a Review</a>
+      <section id="add-review" class="add-review">
+        <a id="add-review-link" class="details-button" href="add_review.html">Add a Review</a>
       </section>
     </main>
 
     {% include 'footer.html' %}
+    <script src="{{ url_for('static', filename='scripts.js') }}"></script>
   </body>
 </html>
