@@ -36,18 +36,17 @@ def test_invalid_amenity_name():
 
 
 def test_create_place():
-    user = User(first_name="Owner", last_name="One", email="owner1@example.com", password="pass")
     place = Place(
         title="Hotel",
         description="Nice place",
         price=100.0,
         latitude=21.5,
         longitude=39.2,
-        owner_id=user.id,
+        owner_id="owner-1",
     )
     assert place.title == "Hotel"
     assert place.price == 100.0
-    assert place.owner_id == user.id
+    assert place.owner_id == "owner-1"
 
 
 def test_invalid_place_title():
@@ -70,13 +69,12 @@ def test_place_amenity_relationship_uses_list_operations():
 
 
 def test_create_review():
-    user = User(first_name="Rev", last_name="Viewer", email="review@example.com", password="pass")
-    place = Place(title="Hotel", description="Nice", price=150, owner_id=user.id)
+    place = Place(title="Hotel", description="Nice", price=150, owner_id="owner-review")
     review = Review(
         rating=5,
         text="Great place",
-        user_id=user.id,
-        place_id=place.id,
+        user_id="reviewer-1",
+        place_id="place-1",
     )
     assert review.rating == 5
     assert review.text == "Great place"
@@ -85,7 +83,7 @@ def test_create_review():
 
 def test_invalid_rating():
     user = User(first_name="User", last_name="X", email="x@example.com", password="pass")
-    place = Place(title="Inn", description="Cozy", price=80, owner_id=user.id)
+    place = Place(title="Inn", description="Cozy", price=80, owner_id="owner-x")
     with pytest.raises(ValueError):
         Review(rating=10, text="Bad", user_id=user.id, place_id=place.id)
 
