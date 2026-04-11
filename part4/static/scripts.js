@@ -1,4 +1,9 @@
-/* Part 4 frontend: cookie JWT, fetches API, renders places and reviews. */
+/*
+ * Part 4 frontend: JWT cookie session, REST calls, place/review/admin UI.
+ * Layout: session/header → amenities & images → fetch/escape → places & reviews → forms → boot.
+ */
+
+/* --- Session & header --- */
 
 function getCookie(name) {
   const prefix = `${name}=`;
@@ -58,6 +63,8 @@ function setHeaderVisibility(token) {
   if (addPlaceLink) addPlaceLink.style.display = admin ? "inline-block" : "none";
   if (adminUsersLink) adminUsersLink.style.display = admin ? "inline-block" : "none";
 }
+
+/* --- Amenities, listing images, place description helpers --- */
 
 const DEFAULT_AMENITY_ICON = "/static/images/icon.png";
 
@@ -410,6 +417,8 @@ async function fetchJson(url, method = "GET", token = "", body = null) {
   return data;
 }
 
+/* --- Home grid, place details, reviews rendering --- */
+
 function applyPriceFilter() {
   const filter = document.getElementById("price-filter");
   const cards = document.querySelectorAll("#places-list .place-card");
@@ -571,6 +580,8 @@ function displayPlaceDetails(place, token = "") {
   configureAddReviewSection(place, token);
 }
 
+/* --- Auth, review, add-place, admin users, boot --- */
+
 function setupPriceFilter() {
   const filter = document.getElementById("price-filter");
   if (filter) filter.addEventListener("change", applyPriceFilter);
@@ -579,10 +590,20 @@ function setupPriceFilter() {
 function setupLoginForm() {
   const form = document.getElementById("login-form");
   const errorBox = document.getElementById("login-error");
+  const banner = document.getElementById("login-banner");
   if (!form) return;
+  const regParams = new URLSearchParams(window.location.search);
+  if (regParams.get("registered") === "1" && banner) {
+    banner.textContent = "Account created successfully. Please sign in.";
+    banner.hidden = false;
+  }
   form.addEventListener("submit", async (event) => {
     event.preventDefault();
     if (errorBox) errorBox.textContent = "";
+    if (banner) {
+      banner.textContent = "";
+      banner.hidden = true;
+    }
 
     const email = document.getElementById("email")?.value.trim() || "";
     const password = document.getElementById("password")?.value || "";
@@ -615,11 +636,7 @@ function setupRegisterForm() {
     };
     try {
       await fetchJson(`${window.location.origin}/api/v1/users/register`, "POST", "", payload);
-      if (box) {
-        box.textContent = "Account created successfully. You can login now.";
-        box.classList.add("success-message");
-      }
-      form.reset();
+      window.location.href = "login.html?registered=1";
     } catch (error) {
       if (box) box.textContent = error.message || "Failed to create account.";
     }
@@ -672,15 +689,22 @@ function configureAddReviewSection(place, token) {
   const link = document.getElementById("add-review-link");
   const hint = document.getElementById("add-review-login-hint");
   const ownerHint = document.getElementById("add-review-owner-hint");
+  const alreadyHint = document.getElementById("add-review-already-hint");
   if (!section) return;
 
   section.style.display = "block";
   const ownerId = place.owner && place.owner.id != null ? String(place.owner.id) : "";
   const me = getJwtSubject(token);
+  const reviews = Array.isArray(place.reviews) ? place.reviews : [];
+  const alreadyReviewed = Boolean(me && reviews.some((r) => String(r.user_id) === String(me)));
 
   if (ownerHint) {
     ownerHint.hidden = true;
     ownerHint.textContent = "";
+  }
+  if (alreadyHint) {
+    alreadyHint.hidden = true;
+    alreadyHint.textContent = "";
   }
   if (hint) hint.hidden = true;
   if (link) link.style.display = "none";
@@ -700,6 +724,15 @@ function configureAddReviewSection(place, token) {
     if (ownerHint) {
       ownerHint.hidden = false;
       ownerHint.textContent = "As the host, you cannot review your own listing.";
+    }
+    return;
+  }
+
+  if (alreadyReviewed) {
+    if (alreadyHint) {
+      alreadyHint.hidden = false;
+      alreadyHint.textContent =
+        "You have already reviewed this place. You can add a review on another listing from the home page.";
     }
     return;
   }
@@ -737,6 +770,17 @@ function setupReviewForm(token) {
         if (box) {
           box.textContent =
             "You cannot review your own listing.";
+          box.classList.remove("success-message");
+        }
+        form.style.display = "none";
+        return;
+      }
+
+      const reviews = Array.isArray(place.reviews) ? place.reviews : [];
+      if (me && reviews.some((r) => String(r.user_id) === String(me))) {
+        if (box) {
+          box.textContent =
+            "You have already reviewed this place. Open another place from the home page if you want to leave more feedback.";
           box.classList.remove("success-message");
         }
         form.style.display = "none";

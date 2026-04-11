@@ -20,19 +20,6 @@ user_create_model = api.model('UserCreate', {
     'is_admin': fields.Boolean(default=False)
 })
 
-user_update_model = api.model('UserUpdate', {
-    'first_name': fields.String,
-    'last_name': fields.String,
-    'password': fields.String
-})
-
-admin_user_update_model = api.model('AdminUserUpdate', {
-    'first_name': fields.String,
-    'last_name': fields.String,
-    'email': fields.String,
-    'password': fields.String
-})
-
 
 @api.route('/login')
 class Login(Resource):

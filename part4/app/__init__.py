@@ -27,8 +27,4 @@ def create_app(config_class="config.DevelopmentConfig"):
     jwt.init_app(app)
     bcrypt.init_app(app)
 
-    # Register API Namespaces later
-    # from app.api.v1 import api as v1_api
-    # v1_api.init_app(app)
-
     return app
